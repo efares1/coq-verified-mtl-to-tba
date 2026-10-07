@@ -50,10 +50,12 @@ then compile and independently check both modules:
     & (Join-Path $RocqBin 'rocq.exe') check -silent MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof
     Pop-Location
 
-Only the direct translation and correctness dependencies are included here;
-the generic optimization, export, initialization, and extraction sources are
-kept in the separate Paper 2 project. Standard Rocq library modules for real
-arithmetic and classical reasoning are required.
+Only the direct translation and correctness dependencies are included here.
+Paper 2 reuses these same shared-clock MTL-to-TBA Rocq proof modules as its
+upstream translation, then adds the generic TBA optimization and export proofs,
+initialization adapter, extraction, implementation, and evaluation. Those
+downstream results are outside this paper's claims. Standard Rocq library
+modules for real arithmetic and classical reasoning are required.
 
 The convenience theorem `MTL_to_TBA_correct` uses the core axiom
 `LTL_TO_BUCHI_CORRECT`. The theorem `MTL_to_TBA_correct_with`, stated in the
