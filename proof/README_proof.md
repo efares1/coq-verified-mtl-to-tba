@@ -10,22 +10,10 @@ only Rocq standard-library modules.
 | `EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v` | canonical reset policy, residual obligations, soundness/completeness, `EncodingCorrect_proved`, and `MTL_to_TBA_correct_with` |
 
 The development was checked with Rocq 9.0.1 (OCaml 4.14.2, Rocq Platform
-2025.08). From PowerShell, set `$RocqBin` to the Platform `bin` directory and
-run from the repository root:
-
-```powershell
-$RocqBin = 'C:\Rocq-Platform~9.0~2025.08\bin'
-Push-Location proof
-& (Join-Path $RocqBin 'rocq.exe') compile MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
-if ($LASTEXITCODE -ne 0) { throw 'Core module compilation failed' }
-& (Join-Path $RocqBin 'rocq.exe') compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
-if ($LASTEXITCODE -ne 0) { throw 'Correctness module compilation failed' }
-& (Join-Path $RocqBin 'rocq.exe') check -silent MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof
-if ($LASTEXITCODE -ne 0) { throw 'Independent Rocq checking failed' }
-& (Join-Path $RocqBin 'rocq.exe') compile CheckAssumptions.v | Out-File -FilePath ASSUMPTIONS.txt -Encoding utf8
-if ($LASTEXITCODE -ne 0) { throw 'Assumptions check failed' }
-Pop-Location
-```
+2025.08). The canonical PowerShell command block, including version checking,
+per-command failure checks, independent checking, and assumption capture, is
+maintained in the root [README](../README.md#rocq-proof). Run it from the
+repository root so the generated assumption record is written to this folder.
 
 The convenience theorem `MTL_to_TBA_correct` uses the core axiom
 `LTL_TO_BUCHI_CORRECT`. The theorem with suffix `_with`, which is the one

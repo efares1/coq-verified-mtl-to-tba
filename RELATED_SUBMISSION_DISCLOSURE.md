@@ -1,8 +1,9 @@
 # Related manuscript disclosure
 
-Customize the bracketed submission-status sentence in each cover letter and
-attach the complete companion manuscript. The two papers share the same Rocq
-translation proof modules; Paper 2 extends the pipeline after TBA construction.
+The two papers share the same Rocq translation proof modules; Paper 2 extends
+the pipeline after TBA construction. The status below reflects the current
+pre-submission plan and must be updated if either manuscript's status changes
+before the cover letters are sent. Attach the complete companion manuscript.
 
 The shared proof sources are `proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v`
 and `proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v` in both
@@ -13,8 +14,8 @@ repositories. Paper 2's additional generic pass proofs are in
 ## Cover letter for Paper 1 (IEEE TSE)
 
 Our related manuscript, “Mechanically Verified Optimization and UPPAAL Export
-for Timed Büchi Automata,” is [submitted to / under consideration at / being
-prepared for] IEEE Access. The manuscripts share the Rocq development for the
+for Timed Büchi Automata,” is being prepared for submission to IEEE Access.
+The manuscripts share the Rocq development for the
 upstream MTL-to-TBA translation, including the shared-clock correctness proof.
 This TSE submission presents that translation result, particularly its
 completeness argument under overlapping activations. The IEEE Access
@@ -27,9 +28,9 @@ the overlap and the separate contributions.
 ## Cover letter for Paper 2 (IEEE Access)
 
 Our related manuscript, “A Mechanically Verified Translation of
-MTL$_{0,\infty}$ into Timed Büchi Automata,” is [submitted to / under
-consideration at / being prepared for] IEEE Transactions on Software
-Engineering. The manuscripts share the Rocq development for the upstream
+MTL$_{0,\infty}$ into Timed Büchi Automata,” is being prepared for submission to IEEE Transactions on Software Engineering.
+The manuscripts share the Rocq
+development for the upstream
 MTL-to-TBA translation, including the shared-clock correctness proof. This
 IEEE Access submission reuses that proof as the upstream component of the
 integrated tool; it does not present the translation proof as a new result.
@@ -38,6 +39,5 @@ optimization and UPPAAL-oriented export, the extracted implementation, and the
 evaluation. We provide both manuscripts so the editor can assess the overlap
 and the separate contributions.
 
-Before sending, replace the bracketed status with the actual status and confirm
-that the attached manuscripts and included Rocq proof modules match the
-versions submitted to each journal.
+Before sending, confirm the status sentence and ensure the attached manuscripts
+and included Rocq proof modules match the versions submitted to each journal.

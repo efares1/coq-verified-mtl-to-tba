@@ -77,13 +77,10 @@ the unsatisfiable action cubes and simplifies the automaton.
 \begin{figure*}[!t]
 \centering
 \resizebox{\textwidth}{!}{\input{figures/fig_steps45}}
-\caption{Spot 2.16 output (TikZ redraw, left; raw DOT and input in
-\texttt{examples/spot/}) and hand-derived reset-completed TBA (right; same state IDs).
-Here $p=\mathsf{LAct}(p)$, $\neg p=\mathsf{LNAct}(p)$, and $!p$ is the
-literal negation of $\mathsf{LAct}(p)$. Timed semantics makes $!p$ and
-$\neg p$ redundant action exclusions; duplicate exclusions are suppressed,
-while $p\land\neg p$ remains for the later TBA simplification. Edges on the
-right are labeled ``guard, action / resets.'' The markers $\mathsf{rst}(c)$
-and $\mathsf{unch}(c)$ mean reset and preserve clock $c$, respectively.}
+\caption{Spot 2.16 output (TikZ redraw, left) and hand-derived reset-completed
+TBA (right; same state IDs). The raw DOT and input are in
+\texttt{examples/spot/}. Right-hand edges show guard, action, and resets; the
+markers $\mathsf{rst}(c)$ and $\mathsf{unch}(c)$ mean reset and preserve clock
+$c$. Action-atom notation is explained in the text.}
 \label{fig:translation-steps45}
 \end{figure*}

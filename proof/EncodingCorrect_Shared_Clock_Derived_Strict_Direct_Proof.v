@@ -1,5 +1,5 @@
 (*
-  EncodingCorrect_Shared_Clock_Proof.v
+  EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
 
   Full proof script for [EncodingCorrect] over the shared-clock core.
 

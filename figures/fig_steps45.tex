@@ -1,10 +1,10 @@
 \begin{tikzpicture}[
   x=1cm,y=1cm,
-  lab/.style={font=\small,align=center,fill=white,inner sep=1.2pt}
+  lab/.style={font=\normalsize,align=center,fill=white,inner sep=1.2pt}
 ]
 % Left: Spot 2.16 output; state IDs match examples/spot/worked_translation.dot.
 \begin{scope}[xshift=0cm]
-  \node[fmnote,font=\small\bfseries] at (2.4,6.0) {Spot output};
+  \node[fmnote,font=\normalsize\bfseries] at (2.4,6.0) {Spot output};
   \node[fmstate] (l0) at (0.0,4.8) {$2$};
   \node[fmstate] (l1) at (0.0,2.4) {$3$};
   \node[fmaccept] (l2) at (4.8,4.8) {$1$};
@@ -26,7 +26,7 @@
 
 % Right: relaxation and reset completion, with the same Spot state IDs.
 \begin{scope}[xshift=9.6cm]
-  \node[fmnote,font=\small\bfseries] at (2.4,6.0) {After relaxation and reset completion};
+  \node[fmnote,font=\normalsize\bfseries] at (2.4,6.0) {Reset-completed TBA};
   \node[fmstate] (r0) at (0.0,4.8) {$2$};
   \node[fmstate] (r1) at (0.0,2.4) {$3$};
   \node[fmaccept] (r2) at (4.8,4.8) {$1$};
