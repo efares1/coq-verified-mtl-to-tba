@@ -790,8 +790,8 @@ current activation. This gives one clock trace for all overlapping
 activations of the same formula. For lower-bounded Until, if no threshold is
 reached, the active-obligation invariant yields the fairness branch. Strict
 cases use strict residuals and the strict increase of timestamps. The
-supplement gives the primitive-by-primitive induction and its arithmetic
-details.
+primitive proof sketches and arithmetic arguments follow below; the
+supplement contains their full formal detail.
 
 \begin{table}[t]
 \centering
@@ -849,9 +849,9 @@ Parser, backend process, output printer & Outside theorem\\
 \end{tabular}
 \end{table}
 
-The detailed arithmetic lemmas and primitive soundness and completeness cases
-are in Supplement~\ref{supp-sec:supp-aux}; the full reset-policy and
-composition arguments are in Supplement~\ref{supp-sec:supp-proofs}.
+\input{proof_arithmetic_main}
+\input{proof_cases_main}
+\input{proof_composition_main}
 
 \section{Related Work}
 \label{sec:related}
@@ -977,11 +977,10 @@ primitive timed subformula suffices even with arbitrarily many overlapping
 activations. Coq proves both semantic preservation and the end-to-end result
 \texttt{MTL\_to\_TBA\_correct\_with} under the stated backend contract.
 
-The result is a proof-backed translation layer for real-time verification
-tools, rather than a standalone finite-input compiler. A practical pipeline
-still needs finite-bound encoding, backend integration, and any required
-initialization and export adapters. The Coq development, proof sources, and
-build instructions for this paper are available in the project repository at
+The verified semantic layer can support a real-time verification pipeline.
+A full tool still needs finite-bound input encoding, backend integration, and
+any required initialization and export adapters. The Coq sources and build
+instructions are available at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}.
 
 \bibliographystyle{IEEEtran}
