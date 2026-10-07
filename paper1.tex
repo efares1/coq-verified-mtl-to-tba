@@ -64,12 +64,12 @@ automaton. The central proof difficulty is reuse: one clock is assigned to
 each distinct primitive timed subformula, even when activations of the same
 subformula overlap. We establish soundness and
 completeness by a canonical reset policy and residual obligations, and prove
-the end-to-end theorem \texttt{MTL\_to\_TBA\_correct\_with}. The result
+the semantic translation theorem \texttt{MTL\_to\_TBA\_correct\_with},
+conditional on the backend contract. The result
 preserves strict and non-strict bounds and does not depend on a particular
 LTL-to-B\"uchi implementation, provided it satisfies the stated contract.
-The intended use is as a verified semantic component in property-automaton
-construction for timed model checking; this artifact is not a standalone
-source-to-automaton compiler.
+This theorem concerns an abstract translation pipeline: it does not establish
+an integrated compiler or a measured advantage over existing tools.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -88,12 +88,14 @@ timed subformula nested under an unbounded temporal operator may be activated
 without bound, and several instances of the same obligation may be pending at
 once.
 
-A concrete use is dense-time verification of a bounded-response property such
-as $\Box(\mathit{req}\Rightarrow\Diamond_{\le d}\mathit{ack})$. If a second
-request arrives before an acknowledgment, two response obligations overlap.
-A property-automaton generator can use the theorem to justify sharing the
-subformula clock while retaining the older deadline; Table~\ref{tab:overlap-example}
-traces two such requests and their common acknowledgment.
+A concrete target is dense-time verification of a bounded-response property
+such as $\Box(\mathit{req}\Rightarrow\Diamond_{\le d}\mathit{ack})$. If a
+second request arrives before an acknowledgment, two response obligations
+overlap. This creates a specific design question for a property-automaton
+generator: can one clock per timed subformula preserve the older deadline
+across later activations? Table~\ref{tab:overlap-example} gives a trace, and
+the Rocq theorem answers this for the abstract translation under its backend
+contract.
 
 This paper gives a mechanized translation for the one-sided-bounded fragment
 $\mathrm{MTL}_{0,\infty}$~\cite{[RK90],[RTH96],[BDLG14]}. Its key construction
@@ -128,7 +130,7 @@ Our contributions are:
         reset policy and residual obligations that justify one clock per
         distinct primitive timed subformula despite arbitrarily overlapping
         activations, without dropping older pending deadlines;
-  \item relaxation and reset completion, with an end-to-end Rocq theorem for
+  \item relaxation and reset completion, with a Rocq semantic theorem for
         every LTL-to-B\"uchi backend satisfying the explicit correctness
         contract.
 \end{itemize}
@@ -141,21 +143,22 @@ material. A companion manuscript reuses this Rocq translation proof and adds
 generic TBA optimization and UPPAAL export; those downstream results are
 outside this paper's scope.
 
-The software impact is a compositional assurance component for property-
-automaton generators. A generator can retain its propositional LTL-to-B\"uchi
-backend and use the proved timed construction, provided the backend satisfies
-Assumption~\ref{ass:backend}. The theorem licenses one clock keyed by each
-distinct primitive timed formula across all of its activations. For the
-bounded-response example, resetting the response clock at every new request
-would overwrite the age of an older pending request and could hide a missed
-deadline; the proved construction preserves the older obligation when it
-remains relevant (Table~\ref{tab:overlap-example}). Thus a tool builder can
-rely on language equivalence to the timed formula, including when requests
-overlap, without allocating a clock per activation. The canonical reset trace
-is a completeness witness in the proof, not a future-aware policy executed by
-the generated tool. This is a machine-checked semantic guarantee, not evidence
-of runtime or automaton-size improvement. The backend contract also makes the
-proof independent of which conforming LTL translator is selected.
+The software relevance is a design invariant for a property-automaton
+generator, proved for this abstract construction: it uses one clock per
+distinct primitive timed subformula, so the clock namespace depends on the
+formula and not on the number of run-time activations. The overlapping-response
+trace in Table~\ref{tab:overlap-example} makes the risk concrete. With a deadline of
+five time units, a request at time 0 is still pending when a second request
+arrives at time 4. Resetting the shared clock for that second request makes an
+acknowledgment at time 6 appear to have age 2, although the first request's
+deadline expired at time 5. The proved language equivalence rules out a
+reset-at-each-request construction that accepts this word on the basis of the
+newer request alone. An implementer can use this invariant when selecting a
+clock-sharing architecture, provided the propositional backend satisfies
+Assumption~\ref{ass:backend}. The canonical reset trace is a completeness
+witness in the proof, not a future-aware policy executed by generated
+software. This result establishes neither a clock-count advantage over CASAAL
+nor a runtime or automaton-size improvement.
 
 The artifact supplies this semantic result, not a drop-in compiler or an
 integrated model-checking workflow. Its input is a well-formed Rocq-level
@@ -168,13 +171,18 @@ clocks therefore needs an adapter with a separate correctness argument.
 Fig.~\ref{fig:translation-steps45} documents the Spot 2.16 propositional
 interface only: the script regenerates the propositional graph, does not
 establish Spot's contract, and does not generate the reset-completed TBA.
+The worked TBA is hand-derived; this paper does not demonstrate a formula-to-
+checker execution. Consequently, the software impact is a verified design
+invariant with a stated assurance boundary, not a validated compiler or
+model-checking workflow.
 
 The broad translation capability is not new: CASAAL already translates
 $\mathrm{MTL}_{0,\infty}$ formulas to timed automata. Our claim is the
 machine-checked soundness and completeness argument for this clocked-LTL
 factorization, in particular the formula-keyed clock policy under overlapping
 activations. We do not claim the first translation or an automaton-size
-advantage.
+advantage. This is a guarantee about our construction, not a comparative
+claim that CASAAL uses more clocks or provides weaker assurance.
 
 \section{Logic and Semantic Model}
 \label{sec:logic}
@@ -462,29 +470,31 @@ Clock sharing has two layers. First, identical primitive formulas at
 different syntax-tree paths share one clock by construction. Second, that
 single clock must represent all pending activations. For example, in
 $\Box(\mathit{req}\Rightarrow\Diamond_{\le5}\mathit{ack})$, requests at times
-0 and 2 can both be pending before an acknowledgement. Retaining the
-reference from time 0 suffices: an acknowledgement at time 4 is within five
-time units of both requests. Table~\ref{tab:overlap-example} traces this
-case. Clock values are measured before the reset decision at each event; at
-the acknowledgement, the guard sees age four and the successful endpoint
-discharges both activations. For any newer request at time $t_k$ between an
-older activation $t_i$ and a witness $t_j$, $t_j-t_k\le t_j-t_i$; the same
-endpoint therefore satisfies the newer upper-bound obligation. The argument
-depends on the required $P$ condition holding between activations and the
-endpoint, which is exactly what the Until residual records.
+0 and 4 overlap. If an acknowledgment occurs at time 6, resetting at the
+second request makes its age appear to be two, although the first request's
+deadline expired at time 5. The shared-clock construction retains the older
+reference and does not accept this word on the basis of the newer request
+alone; Table~\ref{tab:overlap-example} records both ages. More generally, for
+any newer request at time $t_k$ between an older activation $t_i$ and a
+witness $t_j$, $t_j-t_k\le t_j-t_i$; an endpoint that satisfies the older
+upper-bound obligation also satisfies the newer one. The argument depends on
+the required $P$ condition holding between activations and the endpoint,
+which is exactly what the Until residual records.
 
 \begin{table}[t]
 \centering
-\caption{One shared upper-Until clock for overlapping requests.}
+\caption{A per-request reset can hide an expired older deadline. Ages are
+measured immediately before processing each event; the deadline is five time
+units.}
 \label{tab:overlap-example}
 \footnotesize
-\begin{tabular}{@{}clcc@{}}
+\begin{tabular}{@{}clccc@{}}
 \toprule
-Event $i$ & Action & Time $t_i$ & Clock age before decision\\
+Event $i$ & Action & Time $t_i$ & Oldest req. & Reset on req.\\
 \midrule
-0 & $\mathit{req}$ & 0 & 0\\
-1 & $\mathit{req}$ & 2 & 2\\
-2 & $\mathit{ack}$ & 4 & 4\\
+0 & $\mathit{req}$ & 0 & 0 & 0\\
+1 & $\mathit{req}$ & 4 & 4 & 4\\
+2 & $\mathit{ack}$ & 6 & 6 & 2\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -934,7 +944,7 @@ Parsing, backend invocation and output printing are not part of this theorem.
 \caption{Scope of the mechanized translation theorem.}
 \label{tab:proof-boundary}
 \footnotesize
-\begin{tabular}{@{}p{0.62\columnwidth}p{0.31\columnwidth}@{}}
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.63\columnwidth}@{}}
 \toprule
 Pipeline stage & Assurance boundary and software consequence\\
 \midrule
@@ -943,6 +953,7 @@ Timed encoding & Rocq proves equivalence with clocked LTL over clock-consistent 
 Propositional backend & Must satisfy Assumption~\ref{ass:backend}; Spot is an illustrative backend, not verified here.\\
 TBA construction & Rocq proves relaxation and reset completion preserve the timed language; output has event guards and no location invariants.\\
 Model-checker adapter & Existential initial values are part of the target semantics; zero-initialization and export adapters are outside the theorem.\\
+Tool integration & No frontend-to-checker execution is evaluated; Spot only regenerates the propositional graph, and the worked TBA is hand-derived.\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -956,15 +967,15 @@ cited construction and tool against the result proved in this paper.}
 \label{tab:translation-contrast}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}p{0.22\columnwidth}p{0.70\columnwidth}@{}}
+\begin{tabular}{@{}p{0.20\columnwidth}p{0.73\columnwidth}@{}}
 \toprule
 Aspect & Comparison\\
 \midrule
 Automaton construction & \textbf{CASAAL:} Dedicated tableau-style construction for timed obligations. \textbf{This paper:} Clocked-LTL encoding, propositional B\"uchi backend, relaxation, and reset completion.\\
 Timed references & \textbf{CASAAL:} Timed reasoning is integrated into its specialized construction. \textbf{This paper:} Hatted operators preserve the triggering timestamp while logical evaluation moves to the next event.\\
-Proof boundary & \textbf{CASAAL:} Its specialized MTL$_{0,\infty}$ construction is the translation basis. \textbf{This paper:} Rocq proves the timed encoding and reset completion under an explicit correctness contract for the LTL-to-B\"uchi backend.\\
+Assurance evidence & \textbf{CASAAL:} The cited work reports an implemented translation and controller-synthesis workflow with case studies~\cite{li_spin7,casaal_tool}; we do not audit its assurance evidence. \textbf{This paper:} Rocq checks encoding and reset completion under backend language equivalence; front end, backend, and consumer integration are outside the proof. These are different evidence types, not a ranking.\\
 Output use & \textbf{CASAAL:} Translates MTL$_{0,\infty}$ to timed B\"uchi automata and provides deterministic under/over-approximations for timed-game controller synthesis. \textbf{This paper:} Exact, possibly nondeterministic event-guarded property TBAs; no controller-synthesis or export interface is proved.\\
-Clock sharing & \textbf{CASAAL:} Handled by the specialized timed construction. \textbf{This paper:} One clock per distinct primitive timed subformula; residual obligations and the canonical reset policy prove completeness under repeated activations.\\
+Clock sharing & \textbf{CASAAL:} Uses its specialized timed construction; no clock-count comparison is made here. \textbf{This paper:} One clock per distinct primitive timed subformula, independent of activation count; no relative clock-minimality claim.\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1056,15 +1067,18 @@ not imply support for unrestricted punctual MTL. The two papers also use
 different bound domains and timed-word conventions, so this syntactic
 relationship is not a shared-input or semantic comparison.
 
-Our distinct claim is a Rocq-mechanized end-to-end theorem for the
+Our distinct claim is a Rocq-mechanized semantic theorem for the
 clocked-LTL factorization: one clock per distinct primitive timed subformula
 remains complete under arbitrarily repeated activations, including all
 strict and non-strict one-sided cases. This complements MightyPPL's
 construction proofs and implemented pipeline; it does not replace or
 re-verify them. We have not compared the tools on shared inputs or measured
 their relative coverage, performance, or clock counts, and make no performance
-claim. The Rocq development is not integrated with MightyPPL or another
-checker.
+claim. The same limitation applies to the CASAAL comparison in
+Table~\ref{tab:translation-contrast}: its clock row states our formula-keyed
+guarantee, while its assurance row identifies our mechanized boundary; neither
+row ranks the tools. The Rocq development is not integrated with MightyPPL,
+CASAAL, or another checker.
 
 \runinhead{Mechanized translations and trusted backends.}
 Mechanized work has verified LTL-to-B\"uchi translations and model
@@ -1087,12 +1101,13 @@ output were adapted to the automaton interface used by the Rocq development.
 Our result thus isolates the timed translation proof from the backend rather
 than claiming that Spot itself is verified.
 
-Table~\ref{tab:translation-contrast} summarizes how this modular proof
-boundary differs from CASAAL, the closest complete construction for the same
-one-sided-bounded fragment. The comparison concerns proof architecture and
-intended use; it does not claim a general automaton-size advantage. The
-clock-sharing row states the guarantee proved here; it does not imply that
-CASAAL allocates one clock per syntax-tree occurrence or uses more clocks.
+Table~\ref{tab:translation-contrast} summarizes published construction and
+tool features of CASAAL alongside the assurance boundary proved here. It is a
+qualitative assurance-scope comparison based on the cited descriptions, not an
+audit of CASAAL's assurance evidence or a ranking of proof strength. It also
+does not compare clock counts on common inputs. The clock-sharing row does not
+imply that CASAAL allocates one clock per syntax-tree occurrence or uses more
+clocks.
 \section{Conclusion}
 We have presented a mechanically verified semantic translation from
 $\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata without
@@ -1102,15 +1117,21 @@ non-strict bounds; and relaxation with reset completion turns a correct
 propositional B\"uchi backend into a timed automaton. The canonical reset
 policy and residual obligations establish that one clock per distinct
 primitive timed subformula suffices even with arbitrarily many overlapping
-activations. Rocq proves both semantic preservation and the end-to-end result
+activations. Rocq proves semantic preservation and the result
 \texttt{MTL\_to\_TBA\_correct\_with} under the stated backend contract.
 
-The verified semantic layer gives a tool builder a compositional correctness
-argument for the timed part of a property-automaton generator, with the
-propositional backend exposed as an explicit contract. A full tool still needs
-finite-bound input encoding, backend integration, and any required
-initialization and export adapters. The Rocq sources and build instructions
-are available at
+The practical contribution is a verified design invariant that an
+implementation can carry forward: formula-keyed clock allocation remains
+complete under repeated, overlapping activations, subject to the backend
+language-equivalence contract. The overlapping-response trace shows the risk
+that this proof addresses: a per-request reset can make an expired older
+deadline look fresh. In software terms, the result supplies a correctness
+argument for choosing this clock-sharing architecture, but this paper does not
+demonstrate that choice in an integrated compiler or checker. A transfer to an
+executable tool still requires discharging the backend contract and verifying
+the finite-bound input encoding, invocation, initialization, and export
+adapters. We also report no shared-input or clock-count comparison with
+CASAAL. The Rocq sources and build instructions are available at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}.
 
 \bibliographystyle{IEEEtran}
