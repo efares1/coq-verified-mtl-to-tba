@@ -130,8 +130,10 @@ Definition MRgt (d : R) (p q : mtl) : mtl :=
   MOr p (MRhatGt d p q).
 
 
-(* Lower bounds are assumed strictly positive; bound 0 is represented by the
-   corresponding untimed operator. *)
+(* The hatted lower-bound constructors require d > 0. At d = 0, strict
+   increase of timestamps makes both lower-bound tests redundant on future
+   positions; represent the hatted operators by Next applied to the matching
+   untimed Until or Release. *)
 Fixpoint well_formed (f : mtl) : Prop :=
   match f with
   | MTrue | MFalse | MAtom _ | MNotAtom _ => True

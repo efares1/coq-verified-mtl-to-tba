@@ -93,8 +93,11 @@ root in WSL with Spot 2.16 installed, regenerate that output with:
 
     bash examples/spot/regenerate.sh
 
-The script checks the Spot version and records the exact clocked-LTL input
-and command. `worked_translation.tex` explains how the propositional cubes
+The exact clocked-LTL input is in `examples/spot/worked_translation.ltl`, and
+the Spot command is in `examples/spot/regenerate.sh`. The script checks the
+Spot version and writes the generated graph to
+`examples/spot/worked_translation.dot`; it does not create a separate
+invocation log. `worked_translation.tex` explains how the propositional cubes
 are reinterpreted as timed transitions and which later simplifications are
 outside the theorem. The fixed example demonstrates the propositional backend
 stage; it does not run the Rocq translation or verify Spot against the backend

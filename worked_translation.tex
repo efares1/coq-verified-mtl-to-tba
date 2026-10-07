@@ -1,4 +1,4 @@
-\subsection{Worked example: translating a bounded response}
+\subsection{Worked example: bounded eventuality with an exclusion window}
 \label{subsec:worked-translation}
 Consider
 \[
@@ -58,9 +58,12 @@ therefore permits $p$ beginning exactly at age two.
 \item A Spot backend output for $\T(f)$ is shown on the left of
 Fig.~\ref{fig:translation-steps45}. Its cube labels illustrate that clock
 guards, reset markers, preservation markers, and action atoms are independent
-propositions at this stage. In particular, cubes containing both $p$ and
-$\neg p$ are propositionally satisfiable to the backend. The diagram is an
-illustrative output, not a state-size or performance result.
+propositions at this stage. Here $p=\mathsf{LAct}(p)$, while $\neg
+p=\mathsf{LNAct}(p)$ is a distinct proposition and $!p$ is the literal
+negation of $\mathsf{LAct}(p)$. The backend may therefore satisfy a cube
+containing both $p$ and $\neg p$; action consistency is imposed after timed
+reinterpretation. The diagram is an illustrative output, not a state-size or
+performance result.
 
 \item Relaxation removes negative literals over extended clock atoms, and
 reset completion assigns resets according to the clock class: $x$ is reset

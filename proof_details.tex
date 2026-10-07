@@ -77,17 +77,17 @@ eight hatted lemmas above.
 \subsection{Completeness under the Canonical Reset Policy}
 \label{subsec:timed-completeness}
 
-The converse local result is proved for the canonical extension:
+The following case arguments prove the converse on the canonical extension
+defined in the main paper:
 \[
   w,i\satM F
   \quad\Longrightarrow\quad
   \rho^\star,i\satL\T_\pi(F).
 \]
-The difficult point is that all occurrences of the same primitive timed formula
-share one clock and each occurrence may itself be activated repeatedly.  Thus
-several semantic obligations can compete for the same clock trace.  The
-canonical reset policy and the residual predicates are designed to resolve
-this interaction.
+They use the reset decisions, clock update, and residual predicates already
+given in Table~\ref{main-tab:canonical-policy} and
+Eq.~\ref{main-eq:clock-update}; the details below establish how each primitive
+case satisfies its translated obligation.
 
 \runinhead{Upper-bounded hatted Until.}
 Choose the first $q$-position among the MTL witnesses.  The proof maintains,

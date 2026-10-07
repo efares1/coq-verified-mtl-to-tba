@@ -141,21 +141,21 @@ material. A companion manuscript reuses this Rocq translation proof and adds
 generic TBA optimization and UPPAAL export; those downstream results are
 outside this paper's scope.
 
-The software impact is a compositional assurance boundary for property-
-automaton generators. Such a tool can retain its propositional LTL-to-B\"uchi
-backend and use this result for the timed layer, provided it establishes the
-backend contract in Assumption~\ref{ass:backend}. For the bounded-response
-example, the theorem justifies one logical clock for the response subformula
-even when requests overlap, while the residual-based reset policy preserves
-older pending deadlines (Table~\ref{tab:overlap-example}). In particular,
-resetting that shared clock at every new request would overwrite the age of
-an older, still-pending request and could conceal a missed deadline; the
-proved reset policy prevents that error while reusing the formula-keyed
-clock. A tool implementer adopting this construction can use the theorem to
-justify that reuse instead of allocating one clock per runtime activation.
-This is a machine-checked semantic guarantee, not evidence of a runtime or
-automaton-size improvement. The backend contract also makes the proof
-independent of which conforming LTL translator is selected.
+The software impact is a compositional assurance component for property-
+automaton generators. A generator can retain its propositional LTL-to-B\"uchi
+backend and use the proved timed construction, provided the backend satisfies
+Assumption~\ref{ass:backend}. The theorem licenses one clock keyed by each
+distinct primitive timed formula across all of its activations. For the
+bounded-response example, resetting the response clock at every new request
+would overwrite the age of an older pending request and could hide a missed
+deadline; the proved construction preserves the older obligation when it
+remains relevant (Table~\ref{tab:overlap-example}). Thus a tool builder can
+rely on language equivalence to the timed formula, including when requests
+overlap, without allocating a clock per activation. The canonical reset trace
+is a completeness witness in the proof, not a future-aware policy executed by
+the generated tool. This is a machine-checked semantic guarantee, not evidence
+of runtime or automaton-size improvement. The backend contract also makes the
+proof independent of which conforming LTL translator is selected.
 
 The artifact supplies this semantic result, not a drop-in compiler or an
 integrated model-checking workflow. Its input is a well-formed Rocq-level
@@ -262,6 +262,19 @@ require $d>0$, avoiding the degenerate $<0$ case. The eight corresponding
 Rocq lemmas are identified in the result map in Supplement~\ref{supp-app:rocq}.
 Thus only
 the eight hatted timed constructors require primitive translation clauses.
+If a source formula has a zero lower bound, strict increase of timestamps
+makes every strictly future elapsed time positive. At the hatted level,
+$\hUntil_{\ge0}$ and $\hUntil_{>0}$ therefore reduce to
+$\Next(p\Until q)$, while $\hRelease_{\ge0}$ and $\hRelease_{>0}$
+reduce to $\Next(p\Release q)$. For ordinary operators, the current-position
+case must also be simplified: the $\ge0$ cases are the corresponding untimed
+Until and Release operators, and the $>0$ cases reduce to
+$p\land\Next(p\Until q)$ and $p\lor\Next(p\Release q)$,
+respectively. These reductions rely on the paper's strictly increasing event
+times and must be applied before constructing a Rocq formula. A zero strict
+upper bound has an empty interval: Until reduces to $\bot$ and Release to
+$\top$; strict upper-bound constructors in the core consequently require
+$d>0$. Non-strict upper bound zero is included in the mechanized domain.
 
 \begin{figure}[t]
 \centering
@@ -676,13 +689,15 @@ accepts exactly the timed words $w$ for which $w,0\satM f$, under
 existential initial clock values.
 \end{proposition}
 The relaxation proof uses positivity of the clock atoms in $\T(f)$. A run
-of the original B\"uchi automaton remains a run after relaxation. In the
-reverse direction, take a run of the relaxed automaton and adjust each
-propositional assignment only on the extended atoms whose negative literals
-were deleted, making those atoms false; set irrelevant deleted atoms to true
-where needed to recover the original cube. The backend contract makes the
-adjusted word a model of $\T(f)$. On atoms that occur in $\T(f)$, the
-relaxed word only adds truth, so upward closure makes it a model too.
+of the original B\"uchi automaton remains a run after relaxation. Conversely,
+take a run of the relaxed automaton and, at each position, reconstruct an
+assignment satisfying the selected original backend cube: make each extended
+atom false when its deleted negative literal requires this, and choose values
+for removed irrelevant atoms as needed by that cube. The backend contract
+then makes the reconstructed word a model of $\T(f)$. It agrees with the
+relaxed word on base atoms, while the relaxed word can only add truth on
+relevant extended atoms. Upward closure of $\T(f)$ therefore makes the
+relaxed word a model as well.
 Reset completion then assigns resets monotonically: preservation clocks
 become no larger, keeping upper guards true, and restart clocks become no
 smaller, keeping lower guards true. Thus the same B\"uchi run remains
@@ -906,8 +921,14 @@ determinism. In the included development, the theorem
 The convenience theorem \texttt{MTL\_to\_TBA\_correct} uses the core axiom
 \texttt{LTL\_TO\_BUCHI\_CORRECT}; the theorem stated in this paper,
 \texttt{MTL\_to\_TBA\_correct\_with}, instead takes backend language
-equivalence as an explicit argument. The parser, backend invocation and
-output printer are not part of this theorem.
+equivalence as an explicit argument. The assumption audit in
+\texttt{proof/ASSUMPTIONS.txt} also reports the standard Rocq assumptions
+\texttt{ClassicalDedekindReals.sig\_forall\_dec}, dependent functional
+extensionality,
+\texttt{Description.constructive\_definite\_\allowbreak{}description},
+and \texttt{Classical\_Prop.classic}. These library assumptions are separate
+from the backend contract and from the convenience theorem's project axiom.
+Parsing, backend invocation and output printing are not part of this theorem.
 \begin{table}[t]
 \centering
 \caption{Scope of the mechanized translation theorem.}
@@ -1011,24 +1032,39 @@ generalized timed automata and zone-based algorithms~\cite{akshay_et_al_tempora2
 It is an adjacent tool pipeline rather than
 an equivalent MTL$_{0,\infty}$-to-TBA translation.
 Ho et al.'s TACAS 2026 MightyPPL translates pointwise MITL with past and
-Pnueli modalities into timed automata for finite and infinite timed
-words~\cite{mightyppl_tacas26}. Its compositional tester construction
-sequentializes overlapping obligations; the tool can emit networks or
-products for backends including Uppaal, TChecker, and
-LTSmin~\cite{mightyppl_tacas26}. The QEST+FORMATS 2026 follow-up reports an
-implemented extension for the punctual response-property case
-$\Box(p\Rightarrow\Diamond_{=5}q)$ and an evaluation against
-TEMPORA~\cite{mightyppl_qest26}; this reported case does not establish support
-for general punctual MTL. We use MightyPPL as a qualitative comparator based
-on the published logic and assurance scopes: its papers describe an
-implemented analysis pipeline, whereas this paper proves a different
-assurance claim for a clocked-LTL factorization---one clock per distinct
-primitive timed subformula remains complete under arbitrarily repeated
-activations, including the strict and non-strict one-sided cases. This is not
-a head-to-head evaluation: we have not compared the tools on shared inputs or
-measured their relative coverage, performance, or clock counts. We do not
-claim that either work subsumes the other. The included Rocq development is not
-integrated with MightyPPL or another checker and makes no performance claim.
+Pnueli modalities into timed automata over finite and infinite timed
+words~\cite{mightyppl_tacas26}. The paper gives mathematical construction
+results and proof sketches, including for reversal and tester automata, as
+well as a complete implementation. Its compositional tester construction
+sequentializes overlapping obligations and supports backends including
+Uppaal, TChecker, and LTSmin~\cite{mightyppl_tacas26}. The QEST+FORMATS 2026
+follow-up reports an implemented extension for existentially punctual
+MTLPPL~\cite{mightyppl_qest26,mightyppl_qest_arxiv26}. In negation normal
+form, that input class restricts punctual subformulas to designated
+existential positions: the right operand of Until or Since, the left operand
+of Release or Trigger, or an argument of a Pnueli modality. The authors call
+the part without past or Pnueli modalities \emph{one-sided MTL}; in this paper,
+the term one-sided instead describes interval shape, $[0,d]$ or $[d,\infty)$.
+After zero-bound reductions and restricting our bounds to integers, the
+remaining interval syntax of this paper is contained in their class: it has
+no punctual subformulas and uses neither past nor Pnueli operators. Their
+class additionally permits punctual intervals in the stated positions and
+non-one-sided non-punctual intervals. Their response
+example $\Box(p\Rightarrow\Diamond_{=5}q)$ and evaluation against
+TEMPORA~\cite{mightyppl_qest26} illustrate the implemented extension, but do
+not imply support for unrestricted punctual MTL. The two papers also use
+different bound domains and timed-word conventions, so this syntactic
+relationship is not a shared-input or semantic comparison.
+
+Our distinct claim is a Rocq-mechanized end-to-end theorem for the
+clocked-LTL factorization: one clock per distinct primitive timed subformula
+remains complete under arbitrarily repeated activations, including all
+strict and non-strict one-sided cases. This complements MightyPPL's
+construction proofs and implemented pipeline; it does not replace or
+re-verify them. We have not compared the tools on shared inputs or measured
+their relative coverage, performance, or clock counts, and make no performance
+claim. The Rocq development is not integrated with MightyPPL or another
+checker.
 
 \runinhead{Mechanized translations and trusted backends.}
 Mechanized work has verified LTL-to-B\"uchi translations and model
