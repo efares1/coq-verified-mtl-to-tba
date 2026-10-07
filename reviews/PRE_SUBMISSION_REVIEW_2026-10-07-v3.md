@@ -1,0 +1,69 @@
+# Pre-Submission Review: “A Mechanically Verified Translation of MTL₀,∞ into Timed Büchi Automata”
+
+**Venue:** IEEE Transactions on Software Engineering (TSE)
+
+**Authors:** Elie Fares, Jean-Paul Bodeveix, Hussain Al-Aqrabi, and Azar Salami
+
+**Review date:** 7 October 2026
+
+**Revision reviewed:** `319bfb3` (`master`, clean working tree)
+
+**Materials:** Main paper and committed PDF (12 pages), supplement and PDF (6 pages), included Rocq/Coq sources, proof sketches, bibliography, READMEs, build instructions, worked example, and Spot inputs.
+
+## Recommendation
+
+**Major Revision — moderate confidence.** I found no confirmed defect in the stated semantics, clocked-LTL clauses, or main correctness theorem. The strongest contribution is the mechanized completeness argument that one formula-keyed clock can serve repeated, overlapping activations, with strict and non-strict bounds, under an explicit LTL-to-Büchi backend contract.
+
+The revision needs to make the paper’s software impact and contribution boundary more convincing for TSE. The current artifact is a verified semantic component rather than an executable translation pipeline, while a new 2026 MightyPPL tool paper reports a practical pipeline for an overlapping punctual-MTL fragment. The paper should directly compare those results and either demonstrate one downstream use of its proof or strengthen the case for the proof artifact’s independent impact. This is a contribution and venue-fit concern, not a finding that the theorem is wrong.
+
+## Strengths and technical assessment
+
+The paper is unusually explicit about its theorem boundary. It defines event-guarded TBAs without location invariants and with existential initial clock valuations, and states that the theorem does not establish equivalence under a conventional zero-initialization interface ([paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:264), lines 264–295). It also separates the proved clocked-LTL and reset-completion results from the correctness contract required of an external LTL-to-Büchi backend ([paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:602), lines 602–628 and 744–765).
+
+Static comparison found the pointwise semantics, derived ordinary-operator identities, eight hatted translation clauses, reset recurrence, and worked example consistent with the Rocq source. The upper-bounded hatted Until clause uses strong Until in both the paper and the source. The formal reviewer found no confirmed inference error in the primitive cases, reset policy, or theorem composition. The main result and the explicit backend boundary are visible in [paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:705) and [proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v:1816).
+
+The artifact documentation identifies Rocq 9.0.1 and gives compile and kernel-check commands. The Spot example is documented as illustrative, not as a verified backend or a performance evaluation. The inspected figures and tables were consistent with their source files; reviewers found no clipping or overlap. No empirical evaluation is claimed, and the paper appropriately avoids an automaton-size advantage claim.
+
+## Major revisions
+
+### 1. Demonstrate the software impact, or make the assurance case more concrete
+
+The Introduction motivates overlapping bounded-response obligations, but the repository does not provide a usable formula-to-automaton path. Parsing, finite numeric-bound encoding, backend invocation, zero-initialization adaptation, and export are outside the result ([paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:109), lines 109–119 and 143–151). The Spot script regenerates the propositional automaton graph; it does not execute the Coq translation, check Spot against the backend contract, or generate the reset-completed TBA ([README.md](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/README.md:58), lines 58–73; [worked_translation.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/worked_translation.tex:56), lines 56–81).
+
+TSE’s stated scope includes theoretical results when they have potential impact on software construction or analysis ([IEEE TSE scope](https://www.computer.org/digital-library/journals/ts/cfp-ieee-transactions-on-software-engineering)). The manuscript states that potential, but it does not show how a downstream property-automaton generator or model checker benefits from the proved component. Add one focused integration case around the request/acknowledgment example: instantiate the backend contract, show the generated automaton, explain any zero-initialization adapter and its assumptions, then use the output in an actual verification workflow. Broad performance benchmarks are not needed for the paper’s current claims. If integration remains outside scope, state more directly what assurance the theorem adds to an existing toolchain and why that assurance matters to its users.
+
+### 2. Update and sharpen the closest-tool comparison
+
+The related-work section cites the TACAS 2026 MightyPPL paper for MITL with past and Pnueli modalities, then describes it as a different logic and architecture ([paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:926), lines 926–946). Before this review date, a QEST+FORMATS 2026 extension, *MightyPPL: Towards Model Checking MTL*, had appeared. It reports a practical timed-automata tool for punctual MTL properties, including `G(p ⇒ F₌₅ q)`, in addition to past and Pnueli modalities, with an implementation and evaluation against TEMPORA ([Springer chapter](https://link.springer.com/chapter/10.1007/978-3-032-35298-9_12)). This is a close comparator for the paper’s bounded-response motivation and intended model-checking use.
+
+Do not imply that the QEST+FORMATS tool covers all of MTL₀,∞: the available source establishes support for a punctual/one-sided fragment, not equality with the full syntax formalized here. Instead, map the overlap precisely and explain what the Coq result contributes beyond the runnable tool: for example, its formula-keyed clock bound, proof for repeated activations, strict-bound cases, and backend-independent theorem. Then connect that assurance to a concrete pipeline or use case. Keep the existing fair treatment of CASAAL, which already covers the broad MTL₀,∞-to-timed-automata task ([CASAAL tool page](https://lcs.ios.ac.cn/~ligy/tools/CASAAL/)); do not claim priority for the broad translation or imply that CASAAL uses more clocks.
+
+## Minor revisions
+
+- **Clarify proof detail placement.** The paper says that the full case analysis and arithmetic are in the supplement, but includes multi-paragraph soundness and completeness sketches for each primitive family, arithmetic facts, and a structural proof section in its main text ([paper1.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/paper1.tex:768), lines 768–854; [proof_details.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/proof_details.tex:183)). Keep a concise proof roadmap and the key shared-clock invariant in the paper, while making clear that the exhaustive derivations live in one authoritative place. The current 12-page paper is readable; the recommendation is about reducing repeated detail, not restoring a shorter page count.
+- **Clarify the worked automata.** The first graph is a simplified one-clock equivalent automaton, while the structural translation assigns clocks to two distinct timed subformulas and the later reset-completed example therefore has two clocks ([worked_translation.tex](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/worked_translation.tex:3), lines 3–24 and 42–81). Say explicitly that the one-clock graph is a hand-simplified equivalent, not the direct output of the displayed syntax-directed construction. Also say whether the right-hand reset-completed graph is hand-derived; it is not generated by the Spot regeneration script.
+- **Strengthen related-work contrasts.** Describe the PVS verification of the corrected MITL procedure more concretely, then distinguish its release-semantics correction and reuse of an earlier continuous-signal MITL-to-automata construction from this paper’s pointwise, infinite-word Coq proof ([PVS/VMCAI 2018](https://doi.org/10.1007/978-3-319-73721-8_22); [author manuscript](https://arxiv.org/abs/1910.04216)). Quantify the architectural distinction from FoSSaCS’25, TEMPORA, and the TACAS’26 MightyPPL construction where useful; those works are already cited and no claim here overturns the paper’s scoped novelty ([FoSSaCS 2025](https://link.springer.com/chapter/10.1007/978-3-031-90897-2_19), [TEMPORA](https://link.springer.com/chapter/10.1007/978-3-032-22752-2_33), [MightyPPL TACAS 2026](https://link.springer.com/chapter/10.1007/978-3-032-22752-2_24)).
+- **Expose proof dependencies.** The core source labels `EncodingCorrect` as “still to be PROVED,” although the companion proof file proves it ([Core.v](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v:1849), lines 1849–1852). Reword the comment. The supplement and proof README refer readers to `Print Assumptions` output but do not preserve that output; include it with the artifact so the standard-library dependencies can be inspected. The default `compile` definition uses the stated `LTL_TO_BUCHI_CORRECT` axiom, while `MTL_to_TBA_correct_with` takes backend equivalence as an explicit argument; keep this distinction prominent.
+- **Copy and bibliography.** At first mention, use “Rocq 9.0.1 (formerly Coq)” or the project’s preferred current terminology. In the abstract, replace “multiple activations of that obligation overlap” with “multiple activations of the same subformula overlap.” Add the missing pages 274–289 to `maler_mitl_to_ta` in [references.bib](/C:/Users/user/Desktop/JournalPaperChatGPT/Paper1_TSE/references.bib:1683), which appears without a page range in the rendered references. The consistency pass found no unresolved citations or cross-references.
+
+## Specialist assessments
+
+1. **Language and presentation:** Major Revision. Main-text proof sketches overlap substantially with the supplement; also identified terminology, copy, heading-break, and stale Coq-comment edits.
+2. **Internal consistency and citations:** Minor Revision. No unresolved references or claim inconsistencies; identified the missing bibliography page range and the one-clock/two-clock example clarification.
+3. **Technical correctness:** No confirmed semantic or construction defect. The displayed clauses, clock recurrence, worked TBA, and Spot artifacts agree. Review was static.
+4. **Formal methods:** No confirmed proof defect. Bound conditions, TBA model, eight primitive cases, and theorem composition align. Classical reasoning and the default backend axiom are disclosed; preserve the assumptions output.
+5. **Figures and evidence:** No confirmed figure/table defect. Spot input, DOT, redraw, and reset-completion labels agree; Fig. 4 is dense but legible. No empirical claims are made.
+6. **Methodology and reproducibility:** Minor Revision. The Rocq build instructions and Spot regeneration are documented, but the right-hand reset-completed example is not replayable from the script and downstream software impact remains prospective.
+7. **Contribution advocate:** Minor Revision. The formula-keyed shared-clock completeness proof is a defensible, potentially publishable assurance contribution if framed narrowly; a backend instantiation or adapter demonstration would strengthen TSE relevance.
+8. **Contribution skeptic:** Reject. The concern is the missing executable path and the omitted QEST+FORMATS 2026 MightyPPL comparison, not a flaw in the theorem. A concrete integration plus precise comparison could change this to Major Revision.
+9. **Related work:** Minor Revision. Improve contrasts with the PVS result, CASAAL’s target model, and clock-sharing architectures. The QEST+FORMATS 2026 extension is an additional direct comparison that should be added.
+
+## Lead meta-review synthesis
+
+An independent Reviewer 10 agent could not be run because the collaboration thread limit was reached; this synthesis is the lead reviewer’s assessment of the fresh specialist reports. The reports agree that the formal result is carefully scoped and that no technical error was confirmed. They differ on whether the proof artifact alone establishes enough TSE impact. The skeptic’s concern is strengthened by the QEST+FORMATS 2026 MightyPPL tool, while the advocate is right that this paper’s verified shared-clock completeness result is distinct from an unverified tool pipeline.
+
+I recommend **Major Revision**, rather than rejection, because the distinct formal contribution is substantial and the manuscript already avoids claiming a complete compiler or size advantage. Acceptance would depend on a sharper comparison to the new MTL tool and a convincing software-impact story—preferably one small, reproducible integration. If the authors cannot add integration, the paper must explain why the standalone assurance result changes the trust or construction of a real verification workflow. No broad benchmark suite is warranted by the present claims.
+
+## Review limits
+
+The review was read-only; no LaTeX, Rocq, or Spot command was run. Source and committed PDFs were inspected, and the artifact’s reported build/check status was not independently reproduced in this review. The focused related-work search is not exhaustive. The exact relation between MightyPPL’s punctual/one-sided fragment and all of MTL₀,∞ was not established, and CASAAL’s full construction was not independently re-proved or audited. Current TSE length/style requirements were not assessed.
