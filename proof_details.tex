@@ -105,7 +105,7 @@ branches rather than sixteen.
 
 The Coq development establishes two levels of sharing.
 
-\paragraph{Sharing between different syntax-tree occurrences.}
+\runinhead{Sharing between different syntax-tree occurrences.}
 As explained in the semantic setting, two occurrences of the same primitive
 timed subformula share one clock even at different paths; this is built into
 the semantics of the verified translation, not a post-processing optimization.
@@ -113,7 +113,7 @@ In addition, the lemma
 \texttt{identical\_\allowbreak{}nodes\_\allowbreak{}share\_\allowbreak{}canonical\_\allowbreak{}trace}
 shows that the two occurrences have the same canonical value/reset trace.
 
-\paragraph{Sharing between repeated run-time activations.}
+\runinhead{Sharing between repeated run-time activations.}
 A single timed subformula may also be activated repeatedly under
 $\Box$, $\Until$, or $\Release$, so several obligations can overlap even
 though they use one shared clock.  The canonical reset policy resolves this
@@ -354,7 +354,7 @@ assuming clock consistency and the induction hypotheses for the immediate
 subformulas.  No canonical reset-policy assumption appears in
 \eqref{eq:local-soundness}.
 
-\paragraph{Upper-bounded hatted Until.}
+\runinhead{Upper-bounded hatted Until.}
 The translated LTL Until starts at $i+1$ and provides an endpoint $j>i$.
 At position $i$ itself the translation does not constrain the clock, but the
 recurrence~\eqref{eq:supp-clock-update} together with nonnegativity gives
@@ -371,7 +371,7 @@ endpoint $\overline{Q}$ into $q$, matching the semantics of
 $p\hUntil_{\le d}q$.  For $\hUntil_{<d}$, the strict guard $x<d$ gives
 $\elapsed_w(i,j)<d$ in the same way (\texttt{sound\_\allowbreak{}UhatLt}).
 
-\paragraph{Lower-bounded hatted Until.}
+\runinhead{Lower-bounded hatted Until.}
 The translation resets $x$ at $i$ and follows $\Gamma$.  In the finite branch,
 a future state satisfies $x\ge d$ together with $\overline{P}\Until \overline{Q}$.  By
 \eqref{eq:lower-clock}, the endpoint is at least $d$ time units after $i$, and
@@ -383,7 +383,7 @@ threshold $x>d$ gives a strict lower bound in the finite branch, and the
 fairness branch uses the strict argument of Section~\ref{subsec:strict-bounds}
 (\texttt{sound\_\allowbreak{}UhatGt}).
 
-\paragraph{Upper-bounded hatted Release.}
+\runinhead{Upper-bounded hatted Release.}
 The translation resets the shared clock and requires
 \[
   \overline{Q}\WeakUntil\bigl((x>d)\lor(\overline{P}\land \overline{Q})\bigr).
@@ -393,7 +393,7 @@ If the endpoint is $\overline{P}\land \overline{Q}$, $p$ discharges the Release 
 $x>d$, the upper-bounded window has ended.  For $\hRelease_{<d}$, the window
 ends at $x\ge d$ (\texttt{sound\_\allowbreak{}RhatLt}).
 
-\paragraph{Lower-bounded hatted Release.}
+\runinhead{Lower-bounded hatted Release.}
 The translation requires
 \[
   ((x<d)\land\Unch(x))
@@ -426,7 +426,7 @@ several semantic obligations can compete for the same clock trace.  The
 canonical reset policy and the residual predicates are designed to resolve
 this interaction.
 
-\paragraph{Upper-bounded hatted Until.}
+\runinhead{Upper-bounded hatted Until.}
 Choose the first $q$-position among the MTL witnesses.  The proof maintains,
 for every position $n$ with $i<n\le j$ up to that endpoint $j$, the invariant
 \[
@@ -445,7 +445,7 @@ endpoint.  This is the content of the mechanized lemma
 invariant $\CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)<d$ with the residual
 $\mathsf{URes}^{<}$ (\texttt{complete\_\allowbreak{}UhatLt}).
 
-\paragraph{Lower-bounded hatted Until.}
+\runinhead{Lower-bounded hatted Until.}
 At every position where $F$ holds, the canonical policy resets the shared
 clock (Definition~\ref{def:canonical-policy}).  The proof propagates an active obligation until a position satisfies
 \[
@@ -464,7 +464,7 @@ the second branch of $\Gamma$.  This is formalized by
 \texttt{complete\_\allowbreak{}UhatGe}, and by
 \texttt{complete\_\allowbreak{}UhatGt} for the strict threshold $x>d$.
 
-\paragraph{Upper-bounded hatted Release.}
+\runinhead{Upper-bounded hatted Release.}
 The canonical policy resets the clock at every position where $F$ holds.  The
 proof follows the currently active nontrivial Release obligation.  Until it
 is discharged, the clock measures elapsed time from the relevant start and
@@ -473,7 +473,7 @@ discharges the Release or because $x>d$, meaning that the upper-bounded window
 has ended.  This is the role of \texttt{complete\_\allowbreak{}RhatLe}, and of
 \texttt{complete\_\allowbreak{}RhatLt} for the strict window end $x\ge d$.
 
-\paragraph{Lower-bounded hatted Release.}
+\runinhead{Lower-bounded hatted Release.}
 Here the invariant is
 \[
   \mathsf{RRes}
@@ -581,7 +581,7 @@ Finally, $\mathsf{same\_base}(\rho,w)$ rewrites the underlying timed word
 $\ewbase(\rho)$ to $w$, yielding $w,0\satM f$.
 \end{proof}
 
-\paragraph{Scope of the mechanized result.}
+\runinhead{Scope of the mechanized result.}
 Theorem~\ref{main-thm:encoding-correctness} covers the MTL formula, its
 clocked-LTL encoding, and clock-consistent extensions. Corollary
 \ref{main-cor:mtl-tba-correct} extends the result, through relaxation and reset

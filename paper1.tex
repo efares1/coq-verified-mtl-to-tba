@@ -37,6 +37,7 @@
 \newcommand{\CReset}{\mathsf{reset}}
 \newcommand{\elapsed}{\mathsf{elap}}
 \newcommand{\Clock}{\mathit{Clock}}
+\newcommand{\runinhead}[1]{\par\smallskip\noindent\textbf{#1}\enspace}
 
 \title{A Mechanically Verified Translation of MTL$_{0,\infty}$ into Timed B\"uchi Automata}
 
@@ -568,7 +569,7 @@ accepting. The proof is mechanized as
 \texttt{relax\_sound}, \texttt{relax\_complete}, and
 \texttt{complete\_complete}.
 
-\paragraph{Acceptance convention.}
+\runinhead{Acceptance convention.}
 The theorem quantifies existentially over the nonnegative clock values at
 the first event. This is a property of the accepted timed language; it does
 not by itself establish equivalence with an automaton whose clocks must
@@ -669,7 +670,7 @@ The ordinary timed operators have already been unfolded by the semantic
 identities, so they introduce no additional clock case. The full case-by-case
 proof and arithmetic lemmas are in Supplement~\ref{supp-sec:supp-proof}.
 
-\paragraph{Policy-independent soundness.}
+\runinhead{Policy-independent soundness.}
 Clock consistency supplies two inequalities. If $x$ is not reset on
 $[i,j)$, then
 $\CVal_\rho(j,x)=\CVal_\rho(i,x)+\elapsed_w(i,j)$, so its age at $j$ is at
@@ -696,7 +697,7 @@ the threshold until either $p$ discharges it or ordinary Release takes over.
 These arguments use no property of the reset policy beyond clock
 consistency.
 
-\paragraph{Completeness with one trace per formula.}
+\runinhead{Completeness with one trace per formula.}
 Completeness uses the canonical extension from
 Definition~\ref{supp-def:canonical-policy}; the extension is shared by all
 occurrences and activations of each formula-keyed clock. For upper-bounded
@@ -753,7 +754,7 @@ the root. This stronger induction invariant is needed because repeated
 formula occurrences share the same clock while the induction traverses
 separate paths.
 
-\paragraph{What the mechanization assumes.}
+\runinhead{What the mechanization assumes.}
 The proof boundary is summarized in Table~\ref{tab:proof-boundary}. In
 particular, the correctness of the untimed backend is an explicit
 proposition-level assumption; the timed proof does not depend on Spot or on
@@ -793,7 +794,7 @@ the current logical position explicit. They are primitive constructors in
 the logic and proof, so their strict pointwise behavior is not delegated to an
 unverified preprocessing pass.
 
-\paragraph{Translations of timed logics.}
+\runinhead{Translations of timed logics.}
 The closest complete automata construction for MTL$_{0,\infty}$ is CASAAL,
 which uses a dedicated tableau-style method and derives deterministic
 approximations when controller synthesis requires them~\cite{li_spin7,casaal_tool}.
@@ -809,7 +810,7 @@ architecture. Existing techniques for merging timed obligations are related
 to our clock-reuse problem, but the residual predicates here are tailored to
 one-sided bounds and are part of the machine-checked completeness proof.
 
-\paragraph{Clocked temporal logic and subformula clocks.}
+\runinhead{Clocked temporal logic and subformula clocks.}
 CLTLoc extends LTL with clock comparisons and reset predicates and reduces
 satisfiability to a theory solver; it has also been used to encode metric
 logics~\cite{bersani_cltloc}. Our clocked-LTL formula uses a similar
@@ -828,7 +829,7 @@ formula and may face multiple overlapping activations of that same formula.
 The canonical trace resolves those competing references; its correctness is
 proved for each strict and non-strict primitive.
 
-\paragraph{Mechanized translations and trusted backends.}
+\runinhead{Mechanized translations and trusted backends.}
 Mechanized work has verified LTL-to-B\"uchi translations and model
 checkers~\cite{schimpf_tphols09,cava_cav13,ltl_to_gba_afp,seidl_sickert_afp19}.
 For metric logics, PVS developments formalize corrected decision procedures
