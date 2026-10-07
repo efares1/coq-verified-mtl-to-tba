@@ -1,0 +1,81 @@
+\subsection{Structural Equivalence at Every Syntactic Occurrence}
+
+The local timed lemmas are assembled with the homomorphic Boolean and untimed temporal
+cases into the following stronger induction theorem.
+
+\begin{theorem}[Canonical correctness at every occurrence]
+\label{thm:canonical-all}
+Let $\mathit{root}$ be well formed and suppose
+\[
+  \Node(\mathit{root},\pi)=f.
+\]
+Then for every position $i$,
+\[
+  w,i\satM f
+  \quad\Longleftrightarrow\quad
+  \rho^\star,i\satL\T_\pi(f),
+\]
+where $\rho^\star=\mathsf{canonical\_ext}(\mathit{root},w)$.
+\end{theorem}
+
+\begin{proof}[Proof idea]
+The proof is by structural induction on the formula $f$.  Atomic propositions,
+Boolean connectives, Next, untimed Until, and untimed Release follow directly
+from their semantics and the induction hypotheses.  Since the ordinary timed
+operators are Coq definitions, they have already unfolded into these structural
+cases.  The only primitive timed branches are therefore the eight hatted
+constructors.  In each such branch, the forward direction invokes the
+corresponding completeness lemma from
+Section~\ref{subsec:timed-completeness}, while the reverse direction invokes
+the corresponding soundness lemma from
+Section~\ref{subsec:timed-soundness}.  The $\Node$ lemmas locate the two
+children, and well-formedness of the located formula provides the bound and
+recursive hypotheses.
+\end{proof}
+
+This is stronger than a root-only statement and is important in the mechanized
+proof.  The induction retains the path in order to locate the current subformula
+and its children, but the path is not the clock key.  If two paths locate the
+same primitive timed formula, both branches refer to the same formula-keyed
+clock.
+
+\subsection{Proof of the Correctness Theorem}
+\label{subsec:proof-main-theorem}
+We now prove Theorem~\ref{thm:encoding-correctness}.
+
+\begin{proof}
+We prove the two implications separately.
+
+\smallskip
+\noindent\emph{($\Rightarrow$) MTL to clocked LTL.}
+Assume $w,0\satM f$.  Choose the canonical extension
+\[
+  \rho=\mathsf{canonical\_ext}(f,w).
+\]
+By \eqref{supp-eq:canonical-properties}, $\rho$ has the same base timed word as $w$ and is
+clock-consistent.  Applying Theorem~\ref{thm:canonical-all} at the root path $[]$ and
+position $0$ gives
+\[
+  \rho,0\satL\T(f).
+\]
+Therefore the required extension exists.
+
+\smallskip
+\noindent\emph{($\Leftarrow$) Clocked LTL to MTL.}
+Assume there exists an arbitrary $\rho$ such that
+\[
+\begin{gathered}
+  \mathsf{same\_base}(\rho,w),\qquad
+  \mathsf{clock\_consistent}(\rho),\\
+  \rho,0\satL\T(f).
+\end{gathered}
+\]
+This extension need not be canonical, so completeness cannot be used.  Instead, a
+structural induction on $f$ uses the policy-independent soundness lemmas of
+Section~\ref{subsec:timed-soundness} and obtains
+\[
+  \ewbase(\rho),0\satM f.
+\]
+Finally, $\mathsf{same\_base}(\rho,w)$ rewrites the underlying timed word
+$\ewbase(\rho)$ to $w$, yielding $w,0\satM f$.
+\end{proof}

@@ -9,6 +9,8 @@
 *.synctex.gz
 *.toc
 /build/qa/
+/build/*.txt
+/review/
 
 # Coq compiler output.
 proof/*.vo

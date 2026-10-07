@@ -13,7 +13,9 @@ With MiKTeX's pdflatex and bibtex on PATH, run in PowerShell:
     .\build.ps1
 
 The script runs the LaTeX/BibTeX passes needed to settle citations and
-cross-references. Outputs are build/paper1.pdf and build/supplement.pdf.
+cross-references. The final PDFs are copied to the project root as
+paper1.pdf and supplement.pdf; build/paper1.pdf and build/supplement.pdf
+are retained as the compiler outputs.
 The project includes its IEEEtran class and bibliography style, cited
 bibliography, figures, figure styles, and the small package files used by the
 paper (cite, booktabs, enumitem, and mathtools).

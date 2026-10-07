@@ -1,0 +1,159 @@
+\subsection{Soundness of the Primitive Timed Translations}
+\label{subsec:timed-soundness}
+
+For each primitive hatted timed constructor $F$, the local soundness lemma has
+the form
+\begin{equation}
+  \rho,i\satL \T_\pi(F)
+  \quad\Longrightarrow\quad
+  \ewbase(\rho),i\satM F,
+\label{eq:local-soundness}
+\end{equation}
+assuming clock consistency and the induction hypotheses for the immediate
+subformulas.  No canonical reset-policy assumption appears in
+\eqref{eq:local-soundness}.
+
+\runinhead{Upper-bounded hatted Until.}
+The translated LTL Until starts at $i+1$ and provides an endpoint $j>i$.
+At position $i$ itself the translation does not constrain the clock, but the
+recurrence~\eqref{eq:clock-update} together with nonnegativity gives
+$\CVal_\rho(i+1,x)\ge\Delta_i$ whether or not $x$ is reset at $i$.  Along the
+intermediate positions $(i,j)$ the shared clock is unchanged, so
+Lemma~\ref{lem:clock-accumulation} applied on $[i+1,j)$ yields
+$\CVal_\rho(j,x)\ge\Delta_i+\elapsed_w(i+1,j)=\elapsed_w(i,j)$, and the
+endpoint guard $x\le d$ gives
+\[
+  \elapsed_w(i,j)\le d.
+\]
+The induction hypotheses turn the translated prefix $\overline{P}$ into $p$ and the
+endpoint $\overline{Q}$ into $q$, matching the semantics of
+$p\hUntil_{\le d}q$.  For $\hUntil_{<d}$, the strict guard $x<d$ gives
+$\elapsed_w(i,j)<d$ in the same way (\texttt{sound\_\allowbreak{}UhatLt}).
+
+\runinhead{Lower-bounded hatted Until.}
+The translation resets $x$ at $i$ and follows $\Gamma$.  In the finite branch,
+a future state satisfies $x\ge d$ together with $\overline{P}\Until \overline{Q}$.  By
+\eqref{eq:lower-clock}, the endpoint is at least $d$ time units after $i$, and
+the nested Until supplies the required $p$-prefix and $q$-endpoint.  In the
+second branch, $\Always \overline{P}\land\Always\Eventually \overline{Q}$ holds.  Then $p$ holds
+forever and $q$ recurs infinitely often; time divergence guarantees a $q$
+occurrence at physical distance at least $d$.  For $\hUntil_{>d}$, the strict
+threshold $x>d$ gives a strict lower bound in the finite branch, and the
+fairness branch uses the strict argument of Section~\ref{subsec:main-strict-bounds}
+(\texttt{sound\_\allowbreak{}UhatGt}).
+
+\runinhead{Upper-bounded hatted Release.}
+The translation resets the shared clock and requires
+\[
+  \overline{Q}\WeakUntil\bigl((x>d)\lor(\overline{P}\land \overline{Q})\bigr).
+\]
+Before the weak-until endpoint, $q$ holds at every strictly future position.
+If the endpoint is $\overline{P}\land \overline{Q}$, $p$ discharges the Release obligation; if it is
+$x>d$, the upper-bounded window has ended.  For $\hRelease_{<d}$, the window
+ends at $x\ge d$ (\texttt{sound\_\allowbreak{}RhatLt}).
+
+\runinhead{Lower-bounded hatted Release.}
+The translation requires
+\[
+  ((x<d)\land\Unch(x))
+  \WeakUntil
+  \bigl((\overline{P}\Release \overline{Q})\lor((x<d)\land \overline{P})\bigr)
+\]
+from $i+1$.  While the left side holds, the clock is preserved and remains
+below $d$, so those positions are still before the lower threshold.  At the
+endpoint either an ordinary untimed Release takes over or $p$ discharges the
+obligation before the threshold is reached.  For $\hRelease_{>d}$, the
+pre-threshold test is $x\le d$ (\texttt{sound\_\allowbreak{}RhatGt}).
+
+There are no separate ordinary timed soundness lemmas.  After unfolding
+Eqs.~\eqref{eq:derive-ule}--\eqref{eq:derive-rge}, their
+correctness follows from the Boolean cases of the structural induction and the
+eight hatted lemmas above.
+
+\subsection{Completeness under the Canonical Reset Policy}
+\label{subsec:timed-completeness}
+
+The converse local result is proved for the canonical extension:
+\[
+  w,i\satM F
+  \quad\Longrightarrow\quad
+  \rho^\star,i\satL\T_\pi(F).
+\]
+The difficult point is that all occurrences of the same primitive timed formula
+share one clock and each occurrence may itself be activated repeatedly.  Thus
+several semantic obligations can compete for the same clock trace.  The
+canonical reset policy and the residual predicates are designed to resolve
+this interaction.
+
+\runinhead{Upper-bounded hatted Until.}
+Choose the first $q$-position among the MTL witnesses.  The proof maintains,
+for every position $n$ with $i<n\le j$ up to that endpoint $j$, the invariant
+\[
+  \CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)\le d.
+\]
+It need not hold at the activation position $i$ itself (the policy may reset
+there because the old value is useless); it is established at $i+1$ in both
+the reset and the preservation case.
+If the policy preserves the clock, Section~\ref{subsec:canonical-main}
+guarantees an older reference whose residual $\mathsf{URes}$ is still
+satisfiable strictly after the current position; if it resets, the new value is
+consistent with the current activation.  Hence every intermediate position satisfies the clock
+guard required by the translated Until and the first $q$-position supplies its
+endpoint.  This is the content of the mechanized lemma
+\texttt{complete\_\allowbreak{}UhatLe}.  The strict case maintains the strict
+invariant $\CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)<d$ with the residual
+$\mathsf{URes}^{<}$ (\texttt{complete\_\allowbreak{}UhatLt}).
+
+\runinhead{Lower-bounded hatted Until.}
+At every position where $F$ holds, the canonical policy resets the shared
+clock (Section~\ref{subsec:canonical-main}).  The proof propagates an active obligation until a position satisfies
+\[
+  x\ge d
+  \quad\text{and}\quad
+  \overline{P}\Until \overline{Q},
+\]
+which yields the finite branch of $\Gamma$.  If no such position is reached,
+the active-obligation invariant implies that $p$ remains continuously true,
+and since every later position again carries a pending obligation that
+requires a later $q$, the proposition $q$ recurs infinitely often.  This gives
+\[
+  \Always \overline{P}\land\Always\Eventually \overline{Q},
+\]
+the second branch of $\Gamma$.  This is formalized by
+\texttt{complete\_\allowbreak{}UhatGe}, and by
+\texttt{complete\_\allowbreak{}UhatGt} for the strict threshold $x>d$.
+
+\runinhead{Upper-bounded hatted Release.}
+The canonical policy resets the clock at every position where $F$ holds.  The
+proof follows the currently active nontrivial Release obligation.  Until it
+is discharged, the clock measures elapsed time from the relevant start and
+$q$ continues to hold.  The weak until terminates either because $p\land q$
+discharges the Release or because $x>d$, meaning that the upper-bounded window
+has ended.  This is the role of \texttt{complete\_\allowbreak{}RhatLe}, and of
+\texttt{complete\_\allowbreak{}RhatLt} for the strict window end $x\ge d$.
+
+\runinhead{Lower-bounded hatted Release.}
+Here the invariant is
+\[
+  \mathsf{RRes}
+  \bigl(n,\CVal_{\rho^\star}(n,x),d,p,q\bigr).
+\]
+By Section~\ref{subsec:canonical-main}, the shared clock is preserved exactly
+while $x<d$, the residual holds, and $p$ does not occur; in that case the
+residual shifts
+from $(i,v)$ to
+\[
+  (i+1,v+\Delta_i).
+\]
+The Coq lemma \texttt{rge\_\allowbreak{}residual\_\allowbreak{}shift} establishes this one-step update.
+A converse lemma on the preservation policy recovers the residual information needed
+at the next position, so the left side of the weak until remains valid until
+either an ordinary untimed Release is established or $p$ occurs while the
+clock is still below $d$.  This yields \texttt{complete\_\allowbreak{}RhatGe}.
+The strict case uses $\mathsf{RRes}^{>}$, the pre-threshold test $x\le d$, and
+the shift lemma \texttt{rgt\_\allowbreak{}residual\_\allowbreak{}shift}
+(\texttt{complete\_\allowbreak{}RhatGt}).
+
+As with soundness, ordinary timed operators need no additional completeness
+lemmas: unfolding their definitions reduces them to Boolean structure and one
+of the eight hatted primitive cases above.

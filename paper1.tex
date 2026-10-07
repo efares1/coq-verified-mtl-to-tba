@@ -4,6 +4,7 @@
 \usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{enumitem}
 \usepackage{url}
 \usepackage{tikz}
 \usepackage{xr}
@@ -33,9 +34,11 @@
 \newcommand{\Reset}{\mathsf{rst}}
 \newcommand{\Unch}{\mathsf{unch}}
 \newcommand{\T}{\mathcal{T}}
+\newcommand{\Node}{\mathsf{node}}
 \newcommand{\CVal}{\mathsf{val}}
 \newcommand{\CReset}{\mathsf{reset}}
 \newcommand{\elapsed}{\mathsf{elap}}
+\newcommand{\ewbase}{\mathsf{ew\_base}}
 \newcommand{\Clock}{\mathit{Clock}}
 \newcommand{\runinhead}[1]{\par\smallskip\noindent\textbf{#1}\enspace}
 
@@ -361,6 +364,20 @@ evaluation to the next event. The same distinction appears in the clocked
 encoding: the initial $\Next$ moves the temporal obligation forward, while
 the clock retains the reference selected by its reset trace.
 
+For instance, $\Box(e\Rightarrow\widehat{\Box}_{<\theta}\neg e)$ measures
+the exclusion window from the triggering event. Prefixing the ordinary
+operator with $\bigcirc$ shifts the reference to the next event, while
+omitting $\bigcirc$ also constrains the triggering event itself. The three
+readings differ on the same timed word, as shown in Fig.~\ref{fig:hat-reference}.
+\begin{figure*}[t]
+\centering
+\input{figures/fig_sporadic_hat}
+\caption{The hatted sporadicity property and two ordinary-operator
+substitutions. A leading next operator shifts the timing reference to the
+following event; omitting it includes the triggering event in the window.}
+\label{fig:hat-reference}
+\end{figure*}
+
 Clock sharing has two layers. First, identical primitive formulas at
 different syntax-tree paths share one clock by construction. Second, that
 single clock must represent all pending activations. For example, in
@@ -497,6 +514,43 @@ current formula is true; their translated continuation keeps any older
 obligations represented. The strict cases follow the same organization with
 strict residuals and guards.
 
+\subsection{Why one trace suffices for shared activations}
+The clock key is the primitive timed formula, not its syntax-tree path or the
+dynamic activation that created an obligation. Thus identical subformulas at
+different tree positions use the same value and reset trace; the Coq lemma
+\texttt{identical\_nodes\_share\_canonical\_trace} proves this equality.
+Dynamic activations still impose distinct semantic obligations. The canonical
+policy represents them by retaining an older clock reference only while its
+residual obligation remains valid.
+
+For an upper-bounded Until, let activations at $i_0\le i_1<j$ share an
+endpoint $j$. The older reference gives the stronger deadline constraint,
+\[
+ t_j-t_{i_1}\le t_j-t_{i_0}\le d.
+\]
+Its required $p$-prefix contains the suffix required by the newer activation.
+Consequently, preserving the older clock while
+$\mathsf{URes}_{\precsim}$ holds covers both activations; when the older
+residual fails or its endpoint has discharged it, the policy can reset for a
+new obligation. This is the invariant used by
+\texttt{complete\_UhatLe} and its strict counterpart.
+
+Lower-bounded Release has the dual universal shape. An older reference has at
+least the age of a newer one and therefore reaches the lower threshold no
+later. The predicate $\mathsf{RRes}$ records whether every position beyond
+that threshold remains covered by $q$ or an earlier $p$. While the clock is
+preserved, the residual advances by
+\[
+ (i,v)\longmapsto(i+1,v+\Delta_i),
+\]
+which is the one-step lemma \texttt{rge\_residual\_shift} used by
+\texttt{complete\_RhatGe}. In the dual restart families, a current
+activation resets the clock, while the $\Gamma$ branch for lower-bounded
+Until and weak-until continuation for upper-bounded Release retain the older
+obligations in the LTL formula. The same cases use strict residuals and strict
+guards for the strict primitives. The resulting sharing argument is about
+semantic obligations, not an assumption that activations are nonoverlapping.
+
 \section{From Clocked LTL to a TBA}
 \label{sec:tba-construction}
 \subsection{LTL-to-B\"uchi contract}
@@ -578,6 +632,8 @@ enabled for one existential initial value and disabled when the first event
 is at time zero. The conventional initialization question is therefore
 outside Theorem~\ref{thm:mtl-to-tba-correct}; the Coq result is stated for
 the existential convention used throughout the translation proof.
+
+\input{worked_translation}
 
 \section{Correctness and Clock Bound}
 \label{sec:correctness}
@@ -781,8 +837,32 @@ Parser, backend process, output printer & Outside theorem\\
 \end{tabular}
 \end{table}
 
+\input{proof_arithmetic_main}
+\input{proof_cases_main}
+\input{proof_composition_main}
+
 \section{Related Work}
 \label{sec:related}
+\begin{table}[t]
+\centering
+\caption{Qualitative comparison with CASAAL. The table summarizes the
+cited construction and tool against the result proved in this paper.}
+\label{tab:translation-contrast}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.22\columnwidth}p{0.70\columnwidth}@{}}
+\toprule
+Aspect & Comparison\\
+\midrule
+Automaton construction & \textbf{CASAAL:} Dedicated tableau-style construction for timed obligations. \textbf{This paper:} Clocked-LTL encoding, propositional B\"uchi backend, relaxation, and reset completion.\\
+Timed references & \textbf{CASAAL:} Timed reasoning is integrated into its specialized construction. \textbf{This paper:} Hatted operators preserve the triggering timestamp while logical evaluation moves to the next event.\\
+Proof boundary & \textbf{CASAAL:} Correctness is established for the cited specialized construction. \textbf{This paper:} Coq proves the timed encoding and reset completion under an explicit correctness contract for the LTL-to-B\"uchi backend.\\
+Output use & \textbf{CASAAL:} Exact nondeterministic automata support translation; approximations are available when determinism is required for controller synthesis. \textbf{This paper:} Exact, possibly nondeterministic property automata; the theorem does not require determinism.\\
+Clock sharing & \textbf{CASAAL:} Handled by the specialized timed construction. \textbf{This paper:} One clock per distinct primitive timed subformula; residual obligations and the canonical reset policy prove completeness under repeated activations.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 MTL and its dense-time pointwise semantics have a substantial literature,
 including decidability and expressiveness results~\cite{[RK90],[RTH96],MTLsem,
 ouaknine_worrell_lics05,bouyer_chevalier_markey_fsttcs05}. The one-sided-bounded
@@ -843,6 +923,10 @@ output were adapted to the automaton interface used by the Coq development.
 Our result thus isolates the timed translation proof from the backend rather
 than claiming that Spot itself is verified.
 
+Table~\ref{tab:translation-contrast} summarizes how this modular proof
+boundary differs from CASAAL, the closest complete construction for the same
+one-sided-bounded fragment. The comparison concerns proof architecture and
+intended use; it does not claim a general automaton-size advantage.
 \section{Conclusion}
 We have presented a mechanically verified translation from
 $\mathrm{MTL}_{0,\infty}$ to timed B\"uchi automata. Hatted operators make

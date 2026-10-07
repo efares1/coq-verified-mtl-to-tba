@@ -1,0 +1,75 @@
+\subsection{Worked example: translating a bounded response}
+\label{subsec:worked-translation}
+Consider
+\[
+  f=(\Eventually_{\le5}p)\land(\Always_{<2}\neg p).
+\]
+The property requires the first occurrence of $p$ to be no earlier than two
+and no later than five time units after the temporal origin. Figure~\ref{fig:translation-reference-tba}
+shows a small TBA for this language. The construction below follows the
+formula through the clocked-LTL intermediate language and the timed
+reinterpretation.
+
+\begin{figure}[t]
+\centering
+\resizebox{0.88\columnwidth}{!}{\input{figures/fig_tba_example}}
+\caption{A two-location TBA for $f$. The first location enforces the deadline
+$x\le5$ and the guard $x\ge2$ requires $p$ only in the interval $[2,5]$.}
+\label{fig:translation-reference-tba}
+\end{figure}
+
+\begin{enumerate}[label=Step~\arabic*:,leftmargin=*]
+\item The formula is in negation normal form. Expanding the derived operators
+and applying the timed-operator identities gives
+\[
+\begin{aligned}
+f
+ &= (\top\Until_{\le5}p)\land(\bot\Release_{<2}\neg p)\\
+ &= \bigl(p\lor(\top\land\top\hUntil_{\le5}p)\bigr)\\
+ &\qquad\land\bigl(\neg p\land(\bot\lor\bot\hRelease_{<2}\neg p)\bigr).
+\end{aligned}
+\]
+The current-position alternatives in the last line are the derived-operator
+cases of Eqs.~\eqref{eq:derive-ule} and~\eqref{eq:derive-rle}.
+
+\item The two distinct primitive timed subformulas receive clocks $x$ and
+$y$, respectively. Their clocked-LTL translation is
+\begin{align*}
+\Phi_U={}&p\lor\bigl(\top\land\Next\Bigl(
+  ((x\le5)\land\Unch(x)\land\top)\Until\\[-1mm]
+&\qquad((x\le5)\land p)\Bigr)\bigr),\\[-1mm]
+\Phi_R={}&\neg p\land\bigl(\bot\lor(\Reset(y)\land\\[-1mm]
+&\qquad\Next(\neg p\WeakUntil((y\ge2)\lor(\bot\land\neg p))))\bigr),\\[-1mm]
+\T(f)={}&\Phi_U\land\Phi_R.
+\end{align*}
+The upper-bounded Until uses $x$ as a preservation clock. The lower test
+$y\ge2$ is the complement of the strict source bound $<2$; the Release clause
+therefore permits $p$ beginning exactly at age two.
+
+\item Spot translates $\T(f)$ into the propositional B\"uchi automaton on the
+left of Fig.~\ref{fig:translation-steps45}. It has five states and eleven
+cube-labeled transitions. Clock guards, reset markers, preservation markers,
+and action literals are independent propositions at this stage. In
+particular, the cubes containing both $p$ and $\neg p$ are propositionally
+satisfiable to Spot.
+
+\item Relaxation removes negative literals over extended clock atoms, and
+reset completion assigns resets according to the clock class: $x$ is reset
+unless the transition carries $\Unch(x)$, while $y$ is reset exactly when it
+carries $\Reset(y)$. The right side of Fig.~\ref{fig:translation-steps45}
+shows the resulting TBA transitions after the markers are removed. This is
+the boundary of the translation theorem; subsequent optimization removes
+the unsatisfiable action cubes and simplifies the automaton.
+\end{enumerate}
+
+\begin{figure*}[!t]
+\centering
+\resizebox{\textwidth}{!}{\input{figures/fig_steps45}}
+\caption{Generated automata for the worked formula. Left: Spot's B\"uchi
+automaton, before timed reinterpretation. Right: after relaxation and reset
+completion. Here $!p$ is the negative literal of the extended atom $p$,
+whereas $\neg p$ is an action proposition; their conjunction is retained
+until the separate TBA optimization stage. Edges on the right are labeled
+``guard, action / resets.''}
+\label{fig:translation-steps45}
+\end{figure*}
