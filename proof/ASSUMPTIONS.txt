@@ -1,0 +1,45 @@
+﻿EncodingCorrect_proved
+     : EncodingCorrect
+Axioms:
+ClassicalDedekindReals.sig_forall_dec :
+  forall P : nat -> Prop,
+  (forall n : nat, {P n} + {~ P n}) ->
+  {n : nat | ~ P n} + {forall n : nat, P n}
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+Description.constructive_definite_description :
+  forall (A : Type) (P : A -> Prop), (exists ! x : A, P x) -> {x : A | P x}
+Classical_Prop.classic : forall P : Prop, P \/ ~ P
+MTL_to_TBA_correct
+     : forall (f : mtl) (w : timed_word),
+       well_formed f -> msat w 0 f <-> TBA_accepts (compile f) w
+Axioms:
+ClassicalDedekindReals.sig_forall_dec :
+  forall P : nat -> Prop,
+  (forall n : nat, {P n} + {~ P n}) ->
+  {n : nat | ~ P n} + {forall n : nat, P n}
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+Description.constructive_definite_description :
+  forall (A : Type) (P : A -> Prop), (exists ! x : A, P x) -> {x : A | P x}
+Classical_Prop.classic : forall P : Prop, P \/ ~ P
+LTL_TO_BUCHI_CORRECT :
+  forall (root : mtl) (f : ltl root),
+  {A : PBuchi root | forall s : pword root, PBA_accepts A s <-> psat s 0 f}
+MTL_to_TBA_correct_with
+     : forall (f : mtl) (A : PBuchi f) (w : timed_word),
+       (forall s : pword f, PBA_accepts A s <-> psat s 0 (T f)) ->
+       well_formed f -> msat w 0 f <-> TBA_accepts (compile_with A) w
+Axioms:
+ClassicalDedekindReals.sig_forall_dec :
+  forall P : nat -> Prop,
+  (forall n : nat, {P n} + {~ P n}) ->
+  {n : nat | ~ P n} + {forall n : nat, P n}
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+Description.constructive_definite_description :
+  forall (A : Type) (P : A -> Prop), (exists ! x : A, P x) -> {x : A | P x}
+Classical_Prop.classic : forall P : Prop, P \/ ~ P

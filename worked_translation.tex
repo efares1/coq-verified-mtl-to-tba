@@ -6,18 +6,20 @@ Consider
 \]
 The property requires $p$ to be false at the temporal origin and at every
 later event less than two time units from it, and requires a $p$ event by age
-five. Figure~\ref{fig:translation-reference-tba} shows an equivalent,
-one-clock event-guarded TBA. Its first transition consumes the event at the
-origin, requires $\neg p$, and resets $x$. Under the event-indexed reset
-convention of Section~\ref{sec:tba}, the clock value at the next event is
-therefore the elapsed time since the origin. The construction below follows
-the formula through the clocked-LTL intermediate language and the timed
-reinterpretation.
+five. Figure~\ref{fig:translation-reference-tba} shows a hand-simplified,
+equivalent one-clock event-guarded TBA. It is not the direct output of the
+syntax-directed translation below, which assigns separate clocks to the two
+distinct timed subformulas. The figure's first transition consumes the event
+at the origin, requires $\neg p$, and resets $x$. Under the event-indexed
+reset convention of Section~\ref{sec:tba}, the clock value at the next event
+is therefore the elapsed time since the origin. The construction below
+follows the formula through the clocked-LTL intermediate language and the
+timed reinterpretation.
 
 \begin{figure}[t]
 \centering
 \resizebox{0.88\columnwidth}{!}{\input{figures/fig_tba_example}}
-\caption{An equivalent event-guarded TBA for $f$. The initial transition
+\caption{A hand-simplified equivalent event-guarded TBA for $f$. The initial transition
 requires $\neg p$ and resets $x$. In the waiting location, every outgoing
 transition checks $x\le5$; the transition to the accepting location also
 requires $2\le x$. Thus $p$ can first hold only at an event whose age from
@@ -73,7 +75,7 @@ the unsatisfiable action cubes and simplifies the automaton.
 \centering
 \resizebox{\textwidth}{!}{\input{figures/fig_steps45}}
 \caption{Spot 2.16 output (TikZ redraw, left; raw DOT and input in
-\texttt{examples/spot/}) and reset-completed TBA (right; same state IDs).
+\texttt{examples/spot/}) and hand-derived reset-completed TBA (right; same state IDs).
 Here $p=\mathsf{LAct}(p)$, $\neg p=\mathsf{LNAct}(p)$, and $!p$ is the
 literal negation of $\mathsf{LAct}(p)$. Timed semantics makes $!p$ and
 $\neg p$ redundant action exclusions; duplicate exclusions are suppressed,

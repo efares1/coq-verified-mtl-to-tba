@@ -1,8 +1,8 @@
-﻿# Coq source for Paper 1
+# Rocq source for Paper 1
 
 The clocked-LTL translation, its semantics, relaxation, reset completion, and
 correctness proof are in the two direct dependency files below. They import
-only Coq standard-library modules.
+only Rocq standard-library modules.
 
 | File | Role |
 |---|---|
@@ -19,10 +19,14 @@ Push-Location proof
 & (Join-Path $RocqBin 'rocq.exe') compile MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
 & (Join-Path $RocqBin 'rocq.exe') compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
 & (Join-Path $RocqBin 'rocq.exe') check -silent MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof
+& (Join-Path $RocqBin 'rocq.exe') compile CheckAssumptions.v | Out-File -FilePath ASSUMPTIONS.txt -Encoding utf8
+if ($LASTEXITCODE -ne 0) { throw 'Assumptions check failed' }
 Pop-Location
 ```
 
-The Rocq theorem with suffix `_with` takes backend correctness as an explicit
-argument. The theorem does not use a project-specific axiom beyond that
-contract; its standard-library assumptions are reported by the `Print
-Assumptions` command in the proof source.
+The convenience theorem `MTL_to_TBA_correct` uses the core axiom
+`LTL_TO_BUCHI_CORRECT`. The theorem with suffix `_with`, which is the one
+stated in the paper, takes backend language equivalence as an explicit
+argument. `CheckAssumptions.v` prints the assumptions of the encoding theorem
+and both end-to-end theorems; the captured Rocq 9.0.1 output is preserved in
+`ASSUMPTIONS.txt`.

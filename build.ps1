@@ -29,6 +29,12 @@ function Invoke-PdfLatex([string] $document) {
 }
 
 function Invoke-Bibtex([string] $job) {
+    $auxPath = Join-Path $projectRoot "build/$job.aux"
+    if (-not (Test-Path -LiteralPath $auxPath) -or
+        -not (Select-String -LiteralPath $auxPath -Pattern '\\citation\{' -Quiet)) {
+        Write-Output "No citations in $job; skipping BibTeX."
+        return
+    }
     $savedPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {

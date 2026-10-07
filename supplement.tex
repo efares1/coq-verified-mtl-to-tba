@@ -42,7 +42,7 @@
 
 This supplement contains the detailed reset-policy and residual-obligation
 arguments, reset-completion proofs, and auxiliary clock arithmetic. The
-Coq source files used by the development are included in the accompanying
+Rocq source files used by the development are included in the accompanying
 \texttt{proof/} directory. The complete project and build instructions are at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}. Cross-references
 point to the main paper.
@@ -63,7 +63,7 @@ bounds, so remain true. Dually, $\rho'$ resets a restart clock only where
 the cube contains $\Reset(x)$, hence only where $\rho$ resets it. Therefore
 $\CVal_{\rho'}(i,x)\ge\CVal_\rho(i,x)$, and the lower-bound literals
 remain true. Action literals and the B\"uchi condition are unchanged, so the
-same run is accepting after completion (Coq lemma
+same run is accepting after completion (Rocq lemma
 \texttt{complete\_complete}).
 
 \subsection{Exactness of Relaxation and Reset Completion}
@@ -84,101 +84,26 @@ TBA. The mechanized theorem is
 
 \input{proof_details}
 
-\section{Auxiliary Lemmas of the Correctness Proof}
-\label{sec:supp-aux}
-\label{sec:supp-lemmas}
-This section records the semantic and arithmetic facts used in the proof of
-Theorem~\ref{main-thm:encoding-correctness}.
-
-\subsection{Basic LTL Semantic Lemmas}
-For every LTL formula $A$ and position $i$,
-\begin{align}
-\rho,i\satL \Always A &\Longleftrightarrow \forall j\ge i,\;\rho,j\satL A,\nonumber\\
-\rho,i\satL \Eventually A &\Longleftrightarrow \exists j\ge i,\;\rho,j\satL A,\nonumber\\
-\rho,i\satL \Always\Eventually A &\Longleftrightarrow
-  \forall n\ge i\;\exists j\ge n,\;\rho,j\satL A,\label{eq:sem-GF}\\
-\rho,i\satL A\WeakUntil B &\Longleftrightarrow
-  \Bigl(\exists j\ge i.\nonumber\\[-1mm]
-  &\qquad\rho,j\satL B\\[-1mm]
-  &\qquad\land\forall k\in[i,j).\\[-1mm]
-  &\qquad\quad\rho,k\satL A\Bigr)\nonumber\\
-  &\qquad\lor\forall j\ge i.\;\rho,j\satL A.\nonumber
-\end{align}
-These are Coq lemmas \texttt{LG\_semantics}, \texttt{LF\_semantics},
-\texttt{LGF\_semantics}, and \texttt{LW\_semantics}. Time divergence
-adds the following useful consequence: if $d\ge0$ and
-$\Always\Eventually B$ holds from $i$, some future $B$ occurs at physical
-distance at least $d$ from $i$ (Coq: \texttt{GF\_far}).
-
-\subsection{Clock Arithmetic}
-Clock consistency turns symbolic guards into elapsed-time inequalities.
-\begin{lemma}[Accumulation under preservation]
-\label{lem:clock-accumulation}
-If $x$ is not reset at any position in $[i,j)$, then
-\[
-\CVal_\rho(j,x)=\CVal_\rho(i,x)+\elapsed_w(i,j).
-\]
-\end{lemma}
-Since clock values are nonnegative, $\elapsed_w(i,j)\le\CVal_\rho(j,x)$.
-Thus an upper guard $x\le d$ at $j$ entails
-\begin{equation}
-\elapsed_w(i,j)\le d.
-\label{eq:upper-clock}
-\end{equation}
-An upper guard $x<d$ gives the strict version.
-
-\begin{lemma}[Clock value after a reset]
-\label{lem:clock-after-reset}
-If $x$ is reset at $i$ and $j\ge i+1$, then
-$\CVal_\rho(j,x)\le\elapsed_w(i,j)$. If it is not reset again before $j$,
-equality holds.
-\end{lemma}
-A later reset only makes the clock younger. Hence a lower guard gives
-\begin{equation}
-x\ge d\quad\Longrightarrow\quad
-d\le\CVal_\rho(j,x)\le\elapsed_w(i,j),
-\label{eq:lower-clock}
-\end{equation}
-and $x>d$ entails a strict lower bound. The Coq development proves these
-facts as \texttt{preserve\_accumulate},
-\texttt{after\_reset\_value\_le\_elapsed}, and
-\texttt{reset\_preserve\_value\_eq\_elapsed}.
-
-\subsection{Strict Bounds}
-\label{subsec:strict-bounds}
-The eight hatted constructors are the primitive proof families. Ordinary
-timed operators have already been reduced by
-Eqs.~\eqref{main-eq:derive-ule}--\eqref{main-eq:derive-rge}. Strict comparisons remain
-strict through each translation and proof case. In particular, preservation
-gives $\elapsed_w(i,j)\le\CVal_\rho(j,x)$, so $x<d$ implies
-$\elapsed_w(i,j)<d$. After a reset,
-$\CVal_\rho(j,x)\le\elapsed_w(i,j)$, so $x>d$ implies
-$\elapsed_w(i,j)>d$.
-
-The only strict case requiring more than direct guard arithmetic is the
-fairness branch of $\hUntil_{>d}$. Time divergence gives a future $q$ at
-distance at least $d$ from position $i+1$; strict timestamp increase gives
-$t_{i+1}>t_i$, hence the selected $q$ is at distance strictly greater than
-$d$ from $i$. This is the argument formalized in Coq lemma
-\texttt{sound\_UhatGt}.
-
-\section{Coq Result Map}
-\label{app:coq}
+\section{Rocq Result Map}
+\label{app:rocq}
 The paper's principal statements correspond to these definitions and
-theorems in the included Coq development.\par\smallskip
-\noindent\textbf{Proof source.} The Coq definitions of
+theorems in the included Rocq development.\par\smallskip
+\noindent\textbf{Proof source.} The Rocq definitions of
 \texttt{EncodingCorrect\_proved} and
 \texttt{MTL\_to\_TBA\_correct\_with} are in
 \path{proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}.\par\smallskip
 \noindent\textbf{Core source.} The definitions of
 \texttt{T\_uses\_every\_clock} and \texttt{complete\_complete} are in
 \path{proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}.\par\smallskip
+The core file also contains the four ordinary Until and Release compatibility
+lemmas and their strict variants.\par\smallskip
 The theorem with suffix \texttt{\_with} assumes the backend correctness
 contract as an argument. The development includes no project-specific
-assumption in that theorem beyond this explicit contract; the standard
-library assumptions are recorded by Coq's \texttt{Print Assumptions} output
-in the proof source.
+assumption in that theorem beyond this explicit contract. The standard
+library assumptions are preserved in \texttt{ASSUMPTIONS.txt}; reproduction
+instructions are in \texttt{README\_proof.md}. The convenience theorem
+\texttt{MTL\_to\_TBA\_correct} uses the core axiom
+\texttt{LTL\_TO\_BUCHI\_CORRECT}; the main paper states the contract-
+parameterized theorem.
 
-\bibliographystyle{IEEEtran}
-\bibliography{references}
 \end{document}

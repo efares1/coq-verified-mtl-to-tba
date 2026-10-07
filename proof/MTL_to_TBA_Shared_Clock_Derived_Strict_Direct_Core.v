@@ -11,7 +11,7 @@
   backend. The theorem with suffix [_with] in the companion proof file takes
   this backend contract as an explicit hypothesis.
 
-  Dense time is Coq's real-number type R.
+  Dense time is Rocq's real-number type R.
 
   CLOCKS
   ------
@@ -1846,7 +1846,7 @@ Proof.
 Qed.
 
 (* ====================================================================== *)
-(* 11. Exact semantic theorem still to be PROVED, stated separately       *)
+(* 11. Exact semantic theorem, proved in the companion proof file          *)
 (* ====================================================================== *)
 
 Definition EncodingCorrect :=

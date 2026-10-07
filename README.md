@@ -1,6 +1,6 @@
 # Paper 1 — IEEE TSE
 
-This is a standalone LaTeX and Coq-source project for the MTL$_{0,\infty}$
+This is a standalone LaTeX and Rocq-source project for the MTL$_{0,\infty}$
 translation paper. The main manuscript uses the IEEE Computer Society journal
 layout (IEEEtran with journal,compsoc). The main PDF target is at most 12
 pages including references. The detailed proof supplement is a separate PDF
@@ -52,8 +52,17 @@ then compile and independently check both modules:
 
 Only the direct translation and correctness dependencies are included here;
 the generic optimization, export, initialization, and extraction sources are
-kept in the separate Paper 2 project. Standard Coq library modules for real
+kept in the separate Paper 2 project. Standard Rocq library modules for real
 arithmetic and classical reasoning are required.
+
+The convenience theorem `MTL_to_TBA_correct` uses the core axiom
+`LTL_TO_BUCHI_CORRECT`. The theorem `MTL_to_TBA_correct_with`, stated in the
+paper, takes backend language equivalence as an explicit argument. To
+reproduce the assumption record after compiling the two modules above, run
+from `proof/`:
+
+& (Join-Path $RocqBin 'rocq.exe') compile CheckAssumptions.v | Out-File -FilePath ASSUMPTIONS.txt -Encoding utf8
+if ($LASTEXITCODE -ne 0) { throw 'Assumptions check failed' }
 
 ## Spot backend example
 
@@ -67,7 +76,7 @@ The script checks the Spot version and records the exact clocked-LTL input
 and command. `worked_translation.tex` explains how the propositional cubes
 are reinterpreted as timed transitions and which later simplifications are
 outside the theorem. The fixed example demonstrates the propositional backend
-stage; it does not run the Coq translation or verify Spot against the backend
+stage; it does not run the Rocq translation or verify Spot against the backend
 contract. The reset-completed TBA is shown in the paper, while general
 relaxation, initialization adaptation, and export are not implemented by this
 script.
