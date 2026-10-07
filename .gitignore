@@ -8,6 +8,7 @@
 *.out
 *.synctex.gz
 *.toc
+/build/qa/
 
 # Coq compiler output.
 proof/*.vo

@@ -162,23 +162,14 @@ $d$ from $i$. This is the argument formalized in Coq lemma
 \section{Coq Result Map}
 \label{app:coq}
 The paper's principal statements correspond to these definitions and
-theorems in the included Coq development:
-\begin{table*}[t]
-\centering
-\caption{Location of the principal Coq results.}
-\label{tab:coq-result-map}
-\footnotesize
-\begin{tabular}{@{}p{0.30\textwidth}p{0.66\textwidth}@{}}
-\toprule
-Result & Coq source\\
-\midrule
-\texttt{EncodingCorrect\_proved} & \path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}\\
-\texttt{MTL\_to\_TBA\_correct\_with} & \path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}\\
-\texttt{T\_uses\_every\_clock} & \path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}\\
-\texttt{complete\_complete} & \path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}\\
-\bottomrule
-\end{tabular}
-\end{table*}
+theorems in the included Coq development.\par\smallskip
+\noindent\textbf{Proof source.} The Coq definitions of
+\texttt{EncodingCorrect\_proved} and
+\texttt{MTL\_to\_TBA\_correct\_with} are in
+\path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}.\par\smallskip
+\noindent\textbf{Core source.} The definitions of
+\texttt{T\_uses\_every\_clock} and \texttt{complete\_complete} are in
+\path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}.\par\smallskip
 The theorem with suffix \texttt{\_with} assumes the backend correctness
 contract as an argument. The development includes no project-specific
 assumption in that theorem beyond this explicit contract; the standard
