@@ -1,0 +1,592 @@
+\section{Details of the Correctness Proof}
+\label{sec:supp-proof}
+This section gives the parts of the proof of
+Theorem~\ref{main-thm:encoding-correctness} that the article only outlines
+(Section~\ref{main-subsec:proof-outline}); the auxiliary lemmas follow in
+Section~\ref{sec:supp-aux}.
+
+\subsection{Semantic Setting}
+\label{subsec:semantic-setting}
+
+Let
+\[
+  w=(a_0,t_0)(a_1,t_1)(a_2,t_2)\cdots
+\]
+be a timed word, where the timestamps are nonnegative, strictly increasing, and
+time-divergent.  We write
+\[
+  \Delta_i=t_{i+1}-t_i>0,
+  \qquad
+  \elapsed_w(i,j)=t_j-t_i.
+\]
+The MTL satisfaction relation is written $w,i\satM f$.
+
+The translation uses an \emph{extended word} $\rho$ containing the same timed
+word together with clock values and reset decisions.  In the Coq development,
+clocks are not indexed by syntax-tree paths.  The clocks of a formula $f$ are
+its timed subformulas:
+\[
+  \mathit{Clock}(f)=\{F\mid F\text{ is a primitive timed subformula of }f\},
+\]
+a finite type (\texttt{Clock f}), and $\mathsf{clock\_of}(f,F)$ is the formula
+$F$ viewed as an element of $\mathit{Clock}(f)$.  Extended words, LTL formulas
+over the extended alphabet, the translation, and the automata are all indexed
+by $f$, so every clock they mention is, by its type, a timed subformula of $f$.
+Thus, a primitive timed formula $F$ denotes one logical clock independently of
+where it occurs in the syntax tree.  If two different paths locate the same
+syntactic formula, they therefore locate the same clock.  For a clock
+$x\in\mathit{Clock}(f)$ we write
+\[
+  \CVal_\rho(i,x)\in\Real_{\ge0},
+  \qquad
+  \CReset_\rho(i,x)\in\{\mathsf{true},\mathsf{false}\}.
+\]
+We write $\ewbase(\rho)$ for the underlying timed word of $\rho$; the predicate
+$\mathsf{same\_base}(\rho,w)$ states that $\ewbase(\rho)=w$.
+
+Clock consistency imposes the recurrence
+\begin{equation}
+\CVal_\rho(i+1,x)=
+\begin{cases}
+  \Delta_i,
+  & \text{if }\CReset_\rho(i,x)=\mathsf{true},\\[1mm]
+  \CVal_\rho(i,x)+\Delta_i,
+  & \text{otherwise},
+\end{cases}
+\label{eq:supp-clock-update}
+\end{equation}
+together with nonnegativity of all clock values.  Thus, a reset at position $i$
+makes the clock measure the time elapsed since $t_i$.  (In the
+notation of Section~\ref{main-sec:tba}, $\Delta_i=\delta_{i+1}$.)
+
+The LTL satisfaction relation $\rho,i\satL\varphi$ is the standard one, with
+the atoms interpreted on $\rho$: an action $a$ holds iff $a_i=a$;
+$\rho,i\satL(x\sim d)$ iff $\CVal_\rho(i,x)\sim d$;
+$\rho,i\satL\Reset(x)$ iff $\CReset_\rho(i,x)=\mathsf{true}$; and
+$\rho,i\satL\Unch(x)$ iff $\CReset_\rho(i,x)=\mathsf{false}$.
+
+Paths are nevertheless retained for structural traversal.  For a formula $f$
+located at path $\pi$, $\T_\pi(f)$ denotes its LTL translation, and
+$\Node(\mathit{root},\pi)$ returns the subformula at that path.  The auxiliary function
+$\mathsf{clock\_at}(\mathit{root},\pi)$ first locates the formula and then applies
+$\mathsf{clock\_of}(\mathit{root},\cdot)$.  Consequently,
+\[
+\begin{aligned}
+  &\Node(\mathit{root},\pi_1)=F=\Node(\mathit{root},\pi_2)\\
+  &\quad\Longrightarrow\quad
+  \mathsf{clock\_at}(\mathit{root},\pi_1)
+  =
+  \mathsf{clock\_at}(\mathit{root},\pi_2).
+\end{aligned}
+\]
+This is the content of the Coq lemma
+\texttt{identical\_\allowbreak{}nodes\_\allowbreak{}share\_\allowbreak{}clock}.
+
+\subsection{Derived Ordinary Timed Operators}
+\label{subsec:derived-operators-proof}
+
+The source notation contains ordinary and hatted timed operators, but only the
+hatted ones are primitive in the Coq datatype.  The ordinary operators are the
+definitions of Eqs.~\eqref{main-eq:derive-ule}--\eqref{main-eq:derive-rge}, whose
+agreement with the standard pointwise semantics is
+Theorem~\ref{main-thm:derived-semantic-compatibility}.
+The upper-bounded identities separate the case in which the current position
+already supplies the relevant endpoint.  For lower bounds, well-formedness
+requires $d>0$, so a qualifying endpoint is necessarily strictly later than the
+current position; strict upper bounds also require $d>0$.  Since these
+equations are Coq definitions (\texttt{MUle}, \texttt{MUlt}, \texttt{MUge},
+\texttt{MUgt}, and their Release counterparts), ordinary timed operators are
+reduced to Boolean structure plus one hatted timed primitive before the timed
+proof cases are considered.  This is why the structural proof has eight timed
+branches rather than sixteen.
+
+\subsection{Clock Sharing for Identical Subformulas and Repeated Obligations}
+\label{subsec:clock-reuse}
+
+The Coq development establishes two levels of sharing.
+
+\paragraph{Sharing between different syntax-tree occurrences.}
+As explained in the semantic setting, two occurrences of the same primitive
+timed subformula share one clock even at different paths; this is built into
+the semantics of the verified translation, not a post-processing optimization.
+In addition, the lemma
+\texttt{identical\_\allowbreak{}nodes\_\allowbreak{}share\_\allowbreak{}canonical\_\allowbreak{}trace}
+shows that the two occurrences have the same canonical value/reset trace.
+
+\paragraph{Sharing between repeated run-time activations.}
+A single timed subformula may also be activated repeatedly under
+$\Box$, $\Until$, or $\Release$, so several obligations can overlap even
+though they use one shared clock.  The canonical reset policy resolves this
+competition by keeping an old reference when it dominates newer activations
+and restarting the clock only in the dual cases.
+
+For upper-bounded hatted Until, suppose an older activation started at $i_0$
+and a newer one at $i_1$, with $i_0\le i_1<j$.  If $j$ is a valid endpoint for
+the older obligation, then
+\[
+  t_j-t_{i_1}\le t_j-t_{i_0}\le d
+\]
+and the prefix required by the newer activation is a suffix of the older
+prefix.  Therefore keeping the oldest still-useful clock reference cannot lose
+the newer obligation.  In the mechanized proof this reasoning is carried by
+the residual predicate used in \texttt{complete\_\allowbreak{}UhatLe}.
+
+For lower-bounded hatted Release, an older unresolved reference has a clock
+value at least as large as any newer one and therefore reaches the lower
+threshold no later.  The residual predicate
+$\mathsf{RRes}$ (Section~\ref{subsec:residuals}) records precisely the part of the Release obligation that
+remains after some clock age has already accumulated.  Its one-step
+preservation property is isolated in the Coq lemma
+\texttt{rge\_\allowbreak{}residual\_\allowbreak{}shift} and used by
+\texttt{complete\_\allowbreak{}RhatGe}.
+
+The dual families use the opposite policy.  For
+$\hUntil_{\ge d}$ and $\hRelease_{\le d}$, a newly active obligation may reset
+the shared clock.  The stronger LTL continuation (the continuation $\Gamma$ of
+lower-bounded Until, Section~\ref{subsec:clocked-ltl-proof}, and the
+weak-until branch of upper-bounded Release) ensures that older semantic
+obligations remain represented after the restart.
+Each of these arguments holds for the strict comparison of the same family,
+with the strict residual predicates of Section~\ref{subsec:residuals}.
+
+\subsection{Translation of the Primitive Timed Operators}
+\label{subsec:clocked-ltl-proof}
+
+Consider a primitive hatted timed formula $F$ at syntax-tree path $\pi$, with
+left and right subformulas $p$ and $q$.  Let
+\[
+  x=\mathsf{clock\_of}(F),\qquad
+  \overline{P}=\T_{\pi0}(p),\qquad
+  \overline{Q}=\T_{\pi1}(q),
+\]
+and write
+\[
+  H=\Unch(x),\qquad R=\Reset(x),\qquad
+  \alpha\WeakUntil\beta\equiv(\alpha\Until\beta)\lor\Always\alpha.
+\]
+Let $\precsim\in\{\le,<\}$ and $\succsim\in\{\ge,>\}$, with the complementary
+comparisons $\precsim^{\mathrm c}$ and $\succsim^{\mathrm c}$ of
+Section~\ref{main-sec:mtlbuchi}.  For lower-bounded hatted Until define
+\[
+  \Theta=(x\succsim d)\land(\overline{P}\Until \overline{Q}),\qquad
+  \Gamma=(\overline{P}\Until \Theta)\lor(\Always \overline{P}\land\Always\Eventually \overline{Q}),
+\]
+and for the Release cases define
+\[
+\begin{aligned}
+  D&=(x\mathrel{\precsim^{\mathrm c}}d)\lor(\overline{P}\land \overline{Q}),\qquad
+  K=(x\mathrel{\succsim^{\mathrm c}}d)\land H,\\
+  \Lambda&=(\overline{P}\Release \overline{Q})\lor((x\mathrel{\succsim^{\mathrm c}}d)\land \overline{P}).
+\end{aligned}
+\]
+
+The complete primitive timed translation mechanized in Coq consists of eight
+clauses, of four shapes:
+\begin{align*}
+\T_\pi(p\hUntil_{\precsim d}q)
+  &= \Next\bigl(((x\precsim d)\land H\land \overline{P})\\
+  &\qquad\quad\Until((x\precsim d)\land \overline{Q})\bigr),\\[1mm]
+\T_\pi(p\hUntil_{\succsim d}q)
+  &= R\land\Next\Gamma,\\[1mm]
+\T_\pi(p\hRelease_{\precsim d}q)
+  &= R\land\Next(\overline{Q}\WeakUntil D),\\[1mm]
+\T_\pi(p\hRelease_{\succsim d}q)
+  &= \Next(K\WeakUntil \Lambda).
+\end{align*}
+The ordinary timed operators have no translation clauses of their own.  Their
+Coq definitions unfold into Boolean combinations containing the corresponding
+hatted operator, after which the homomorphic Boolean translation and the
+clauses above apply automatically.
+
+All primitive formulas start logical evaluation after the current
+position, which accounts for the $\Next$ in every clause.  The current timestamp
+remains the clock reference, as required by the hatted semantics.
+
+\subsection{Auxiliary Lemmas}
+The proof uses elementary facts about LTL (the semantics of $\Always\Eventually$,
+Eq.~\eqref{eq:sem-GF}, and the unfolding of Until and weak until) and clock
+arithmetic: the value of a preserved clock accumulates the elapsed time
+(Lemma~\ref{lem:clock-accumulation}), a reset clock measures the time elapsed
+since its last reset, and the clock tests therefore bound the elapsed time
+from above and from below (Eqs.~\eqref{eq:upper-clock}
+and~\eqref{eq:lower-clock}), with the strict variants of
+Section~\ref{subsec:strict-bounds}.  These lemmas and their proofs are given in
+Section~\ref{sec:supp-lemmas}.
+
+\subsection{Residual Obligations and the Canonical Extension}
+\label{subsec:residuals}
+
+Soundness can reason about an arbitrary clock-consistent extension.  Completeness,
+however, must construct a reset trace that realizes the translation.  Following
+the canonical extended-word construction of CASAAL~\cite{li_spin7}, the proof
+does this using a deterministic canonical policy and residual predicates,
+adapted here to formula-keyed shared clocks.
+
+For upper-bounded Until, define
+\begin{align*}
+&\mathsf{URes}(i,v,d,p,q)\iff{}\\
+&\quad\exists j\ge i.\;
+  v+\elapsed_w(i,j)\le d
+  \land w,j\satM q\\
+&\qquad\land
+  \forall k\in[i,j).\;w,k\satM p.
+\end{align*}
+The value $v$ represents time accumulated before the current position.  Thus
+$\mathsf{URes}$ means that an older upper-bounded Until obligation is still able to
+reach a valid $q$ endpoint.
+
+For lower-bounded Release, define
+\begin{align*}
+&\mathsf{RRes}(i,v,d,p,q)\iff{}\\
+&\quad\forall j\ge i.\;
+  d\le v+\elapsed_w(i,j)
+  \Longrightarrow{}\\
+&\qquad\bigl(
+  w,j\satM q
+  \lor
+  \exists k\in[i,j).\;w,k\satM p
+\bigr).
+\end{align*}
+Here the residual represents a Release obligation that started before $i$ and has
+already accumulated clock age $v$.
+
+For the strict primitives, the proof uses the strict counterparts
+\begin{align*}
+&\mathsf{URes}^{<}(i,v,d,p,q)\iff{}\\
+&\quad\exists j\ge i.\;
+  v+\elapsed_w(i,j)< d
+  \land w,j\satM q\\
+&\qquad\land
+  \forall k\in[i,j).\;w,k\satM p,\\[1mm]
+&\mathsf{RRes}^{>}(i,v,d,p,q)\iff{}\\
+&\quad\forall j\ge i.\;
+  d< v+\elapsed_w(i,j)
+  \Longrightarrow{}\\
+&\qquad\bigl(
+  w,j\satM q
+  \lor
+  \exists k\in[i,j).\;w,k\satM p
+\bigr).
+\end{align*}
+They are the Coq predicates \texttt{ult\_\allowbreak{}residual} and
+\texttt{rgt\_\allowbreak{}residual}; the one-step update of the latter is
+\texttt{rgt\_\allowbreak{}residual\_\allowbreak{}shift}.
+
+The reset decision is selected by matching on the \emph{formula-keyed clock}
+itself, so the canonical policy has one case per hatted primitive; the strict
+cases use the strict residual predicates $\mathsf{URes}^{<}$ and
+$\mathsf{RRes}^{>}$ defined above.
+
+\begin{definition}[Canonical reset policy and canonical extension]
+\label{def:canonical-policy}
+For a clock $x=F$, a position $i$, and a current clock value $v$, the reset
+decision $\mathsf{reset}^\star(F,i,v)$ is defined as follows:
+\begin{itemize}[leftmargin=*]
+  \item $F=p\hUntil_{\le d}q$: the clock is \emph{preserved} (not reset) iff
+        $v\le d$, $\mathsf{URes}(i,v,d,p,q)$, and $w,i\not\satM q$;
+  \item $F=p\hUntil_{<d}q$: the clock is \emph{preserved} iff
+        $v<d$, $\mathsf{URes}^{<}(i,v,d,p,q)$, and $w,i\not\satM q$;
+  \item $F=p\hUntil_{\succsim d}q$ or $F=p\hRelease_{\precsim d}q$: the clock
+        is reset iff $w,i\satM F$;
+  \item $F=p\hRelease_{\ge d}q$: the clock is \emph{preserved} iff
+        $v<d$, $\mathsf{RRes}(i,v,d,p,q)$, and $w,i\not\satM p$;
+  \item $F=p\hRelease_{>d}q$: the clock is \emph{preserved} iff
+        $v\le d$, $\mathsf{RRes}^{>}(i,v,d,p,q)$, and $w,i\not\satM p$.
+\end{itemize}
+The canonical extension $\rho^\star=\mathsf{canonical\_ext}(\mathit{root},w)$
+has base word $w$ and, writing $u_i=\CVal_{\rho^\star}(i,x)$, clock values
+\[
+  u_0=0,\qquad
+  u_{i+1}=
+  \begin{cases}
+    \Delta_i, & \text{if }\mathsf{reset}^\star(x,i,u_i),\\
+    u_i+\Delta_i, & \text{otherwise},
+  \end{cases}
+\]
+and reset decisions $\CReset_{\rho^\star}(i,x)=\mathsf{reset}^\star(x,i,u_i)$.
+\end{definition}
+
+This is the Coq definition \texttt{reset\_\allowbreak{}policy} with
+\texttt{canonical\_\allowbreak{}val}.  The decisions depend on the future
+of $w$ (through the residual predicates and the satisfaction of $F$),
+so $\rho^\star$ is a non-constructive witness defined with classical logic; it
+is used only to prove completeness.
+
+The side conditions $w,i\not\satM q$ and $w,i\not\satM p$ are needed for the
+canonical policy.  If the
+older $\hUntil_{\precsim d}$ obligation is discharged by $q$ at the current position
+$i$, nothing is required of the clock after $i$, and the clock is reset for the
+newer activations; preserving it there could make a newer obligation miss its
+bound.  Symmetrically, a $p$ at position $i$ discharges an older
+$\hRelease_{\succsim d}$ obligation.  For $\hUntil_{\succsim d}$ and $\hRelease_{\precsim d}$,
+restarting at every position where $F$ holds keeps the newest reference, and
+the $\Gamma$ and weak-until continuations of the translation keep older
+obligations represented.
+
+The policy depends only on the clock $x=F$ and on $w$, not on the syntax-tree
+path; this is why one decision simultaneously governs all syntax-tree
+occurrences of the same timed formula.  Ordinary timed operators require no
+additional policy cases because they unfold to these hatted primitives.
+By construction,
+\begin{equation}
+  \mathsf{same\_base}(\rho^\star,w)
+  \qquad\text{and}\qquad
+  \mathsf{clock\_consistent}(\rho^\star).
+\label{eq:canonical-properties}
+\end{equation}
+
+The residual predicates above are the mechanized form of the clock-reuse
+principle stated informally in Section~\ref{subsec:clock-reuse}.  They allow the canonical policy to carry an older
+reference forward without allocating a fresh clock for each activation.
+
+\subsection{Soundness of the Primitive Timed Translations}
+\label{subsec:timed-soundness}
+
+For each primitive hatted timed constructor $F$, the local soundness lemma has
+the form
+\begin{equation}
+  \rho,i\satL \T_\pi(F)
+  \quad\Longrightarrow\quad
+  \ewbase(\rho),i\satM F,
+\label{eq:local-soundness}
+\end{equation}
+assuming clock consistency and the induction hypotheses for the immediate
+subformulas.  No canonical reset-policy assumption appears in
+\eqref{eq:local-soundness}.
+
+\paragraph{Upper-bounded hatted Until.}
+The translated LTL Until starts at $i+1$ and provides an endpoint $j>i$.
+At position $i$ itself the translation does not constrain the clock, but the
+recurrence~\eqref{eq:supp-clock-update} together with nonnegativity gives
+$\CVal_\rho(i+1,x)\ge\Delta_i$ whether or not $x$ is reset at $i$.  Along the
+intermediate positions $(i,j)$ the shared clock is unchanged, so
+Lemma~\ref{lem:clock-accumulation} applied on $[i+1,j)$ yields
+$\CVal_\rho(j,x)\ge\Delta_i+\elapsed_w(i+1,j)=\elapsed_w(i,j)$, and the
+endpoint guard $x\le d$ gives
+\[
+  \elapsed_w(i,j)\le d.
+\]
+The induction hypotheses turn the translated prefix $\overline{P}$ into $p$ and the
+endpoint $\overline{Q}$ into $q$, matching the semantics of
+$p\hUntil_{\le d}q$.  For $\hUntil_{<d}$, the strict guard $x<d$ gives
+$\elapsed_w(i,j)<d$ in the same way (\texttt{sound\_\allowbreak{}UhatLt}).
+
+\paragraph{Lower-bounded hatted Until.}
+The translation resets $x$ at $i$ and follows $\Gamma$.  In the finite branch,
+a future state satisfies $x\ge d$ together with $\overline{P}\Until \overline{Q}$.  By
+\eqref{eq:lower-clock}, the endpoint is at least $d$ time units after $i$, and
+the nested Until supplies the required $p$-prefix and $q$-endpoint.  In the
+second branch, $\Always \overline{P}\land\Always\Eventually \overline{Q}$ holds.  Then $p$ holds
+forever and $q$ recurs infinitely often; time divergence guarantees a $q$
+occurrence at physical distance at least $d$.  For $\hUntil_{>d}$, the strict
+threshold $x>d$ gives a strict lower bound in the finite branch, and the
+fairness branch uses the strict argument of Section~\ref{subsec:strict-bounds}
+(\texttt{sound\_\allowbreak{}UhatGt}).
+
+\paragraph{Upper-bounded hatted Release.}
+The translation resets the shared clock and requires
+\[
+  \overline{Q}\WeakUntil\bigl((x>d)\lor(\overline{P}\land \overline{Q})\bigr).
+\]
+Before the weak-until endpoint, $q$ holds at every strictly future position.
+If the endpoint is $\overline{P}\land \overline{Q}$, $p$ discharges the Release obligation; if it is
+$x>d$, the upper-bounded window has ended.  For $\hRelease_{<d}$, the window
+ends at $x\ge d$ (\texttt{sound\_\allowbreak{}RhatLt}).
+
+\paragraph{Lower-bounded hatted Release.}
+The translation requires
+\[
+  ((x<d)\land\Unch(x))
+  \WeakUntil
+  \bigl((\overline{P}\Release \overline{Q})\lor((x<d)\land \overline{P})\bigr)
+\]
+from $i+1$.  While the left side holds, the clock is preserved and remains
+below $d$, so those positions are still before the lower threshold.  At the
+endpoint either an ordinary untimed Release takes over or $p$ discharges the
+obligation before the threshold is reached.  For $\hRelease_{>d}$, the
+pre-threshold test is $x\le d$ (\texttt{sound\_\allowbreak{}RhatGt}).
+
+There are no separate ordinary timed soundness lemmas.  After unfolding
+Eqs.~\eqref{main-eq:derive-ule}--\eqref{main-eq:derive-rge}, their
+correctness follows from the Boolean cases of the structural induction and the
+eight hatted lemmas above.
+
+\subsection{Completeness under the Canonical Reset Policy}
+\label{subsec:timed-completeness}
+
+The converse local result is proved for the canonical extension:
+\[
+  w,i\satM F
+  \quad\Longrightarrow\quad
+  \rho^\star,i\satL\T_\pi(F).
+\]
+The difficult point is that all occurrences of the same primitive timed formula
+share one clock and each occurrence may itself be activated repeatedly.  Thus
+several semantic obligations can compete for the same clock trace.  The
+canonical reset policy and the residual predicates are designed to resolve
+this interaction.
+
+\paragraph{Upper-bounded hatted Until.}
+Choose the first $q$-position among the MTL witnesses.  The proof maintains,
+for every position $n$ with $i<n\le j$ up to that endpoint $j$, the invariant
+\[
+  \CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)\le d.
+\]
+It need not hold at the activation position $i$ itself (the policy may reset
+there because the old value is useless); it is established at $i+1$ in both
+the reset and the preservation case.
+If the policy preserves the clock, Definition~\ref{def:canonical-policy}
+guarantees an older reference whose residual $\mathsf{URes}$ is still
+satisfiable strictly after the current position; if it resets, the new value is
+consistent with the current activation.  Hence every intermediate position satisfies the clock
+guard required by the translated Until and the first $q$-position supplies its
+endpoint.  This is the content of the mechanized lemma
+\texttt{complete\_\allowbreak{}UhatLe}.  The strict case maintains the strict
+invariant $\CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)<d$ with the residual
+$\mathsf{URes}^{<}$ (\texttt{complete\_\allowbreak{}UhatLt}).
+
+\paragraph{Lower-bounded hatted Until.}
+At every position where $F$ holds, the canonical policy resets the shared
+clock (Definition~\ref{def:canonical-policy}).  The proof propagates an active obligation until a position satisfies
+\[
+  x\ge d
+  \quad\text{and}\quad
+  \overline{P}\Until \overline{Q},
+\]
+which yields the finite branch of $\Gamma$.  If no such position is reached,
+the active-obligation invariant implies that $p$ remains continuously true,
+and since every later position again carries a pending obligation that
+requires a later $q$, the proposition $q$ recurs infinitely often.  This gives
+\[
+  \Always \overline{P}\land\Always\Eventually \overline{Q},
+\]
+the second branch of $\Gamma$.  This is formalized by
+\texttt{complete\_\allowbreak{}UhatGe}, and by
+\texttt{complete\_\allowbreak{}UhatGt} for the strict threshold $x>d$.
+
+\paragraph{Upper-bounded hatted Release.}
+The canonical policy resets the clock at every position where $F$ holds.  The
+proof follows the currently active nontrivial Release obligation.  Until it
+is discharged, the clock measures elapsed time from the relevant start and
+$q$ continues to hold.  The weak until terminates either because $p\land q$
+discharges the Release or because $x>d$, meaning that the upper-bounded window
+has ended.  This is the role of \texttt{complete\_\allowbreak{}RhatLe}, and of
+\texttt{complete\_\allowbreak{}RhatLt} for the strict window end $x\ge d$.
+
+\paragraph{Lower-bounded hatted Release.}
+Here the invariant is
+\[
+  \mathsf{RRes}
+  \bigl(n,\CVal_{\rho^\star}(n,x),d,p,q\bigr).
+\]
+By Definition~\ref{def:canonical-policy}, the shared clock is preserved exactly
+while $x<d$, the residual holds, and $p$ does not occur; in that case the
+residual shifts
+from $(i,v)$ to
+\[
+  (i+1,v+\Delta_i).
+\]
+The Coq lemma \texttt{rge\_\allowbreak{}residual\_\allowbreak{}shift} establishes this one-step update.
+A converse lemma on the preservation policy recovers the residual information needed
+at the next position, so the left side of the weak until remains valid until
+either an ordinary untimed Release is established or $p$ occurs while the
+clock is still below $d$.  This yields \texttt{complete\_\allowbreak{}RhatGe}.
+The strict case uses $\mathsf{RRes}^{>}$, the pre-threshold test $x\le d$, and
+the shift lemma \texttt{rgt\_\allowbreak{}residual\_\allowbreak{}shift}
+(\texttt{complete\_\allowbreak{}RhatGt}).
+
+As with soundness, ordinary timed operators need no additional completeness
+lemmas: unfolding their definitions reduces them to Boolean structure and one
+of the eight hatted primitive cases above.
+
+\subsection{Structural Equivalence at Every Syntactic Occurrence}
+
+The local timed lemmas are assembled with the homomorphic Boolean and untimed temporal
+cases into the following stronger induction theorem.
+
+\begin{theorem}[Canonical correctness at every occurrence]
+\label{thm:canonical-all}
+Let $\mathit{root}$ be well formed and suppose
+\[
+  \Node(\mathit{root},\pi)=f.
+\]
+Then for every position $i$,
+\[
+  w,i\satM f
+  \quad\Longleftrightarrow\quad
+  \rho^\star,i\satL\T_\pi(f),
+\]
+where $\rho^\star=\mathsf{canonical\_ext}(\mathit{root},w)$.
+\end{theorem}
+
+\begin{proof}[Proof idea]
+The proof is by structural induction on the formula $f$.  Atomic propositions,
+Boolean connectives, Next, untimed Until, and untimed Release follow directly
+from their semantics and the induction hypotheses.  Since the ordinary timed
+operators are Coq definitions, they have already unfolded into these structural
+cases.  The only primitive timed branches are therefore the eight hatted
+constructors.  In each such branch, the forward direction invokes the
+corresponding completeness lemma from
+Section~\ref{subsec:timed-completeness}, while the reverse direction invokes
+the corresponding soundness lemma from
+Section~\ref{subsec:timed-soundness}.  The $\Node$ lemmas locate the two
+children, and well-formedness of the located formula provides the bound and
+recursive hypotheses.
+\end{proof}
+
+This is stronger than a root-only statement and is important in the mechanized
+proof.  The induction retains the path in order to locate the current subformula
+and its children, but the path is not the clock key.  If two paths locate the
+same primitive timed formula, both branches refer to the same formula-keyed
+clock.
+
+\subsection{Proof of the Correctness Theorem}
+\label{subsec:proof-main-theorem}
+We now prove Theorem~\ref{main-thm:encoding-correctness}.
+
+\begin{proof}
+We prove the two implications separately.
+
+\smallskip
+\noindent\emph{($\Rightarrow$) MTL to clocked LTL.}
+Assume $w,0\satM f$.  Choose the canonical extension
+\[
+  \rho=\mathsf{canonical\_ext}(f,w).
+\]
+By \eqref{eq:canonical-properties}, $\rho$ has the same base timed word as $w$ and is
+clock-consistent.  Applying Theorem~\ref{thm:canonical-all} at the root path $[]$ and
+position $0$ gives
+\[
+  \rho,0\satL\T(f).
+\]
+Therefore the required extension exists.
+
+\smallskip
+\noindent\emph{($\Leftarrow$) Clocked LTL to MTL.}
+Assume there exists an arbitrary $\rho$ such that
+\[
+\begin{gathered}
+  \mathsf{same\_base}(\rho,w),\qquad
+  \mathsf{clock\_consistent}(\rho),\\
+  \rho,0\satL\T(f).
+\end{gathered}
+\]
+This extension need not be canonical, so completeness cannot be used.  Instead, a
+structural induction on $f$ uses the policy-independent soundness lemmas of
+Section~\ref{subsec:timed-soundness} and obtains
+\[
+  \ewbase(\rho),0\satM f.
+\]
+Finally, $\mathsf{same\_base}(\rho,w)$ rewrites the underlying timed word
+$\ewbase(\rho)$ to $w$, yielding $w,0\satM f$.
+\end{proof}
+
+\paragraph{Scope of the mechanized result.}
+Theorem~\ref{main-thm:encoding-correctness} covers the MTL formula, its
+clocked-LTL encoding, and clock-consistent extensions. Corollary
+\ref{main-cor:mtl-tba-correct} extends the result, through relaxation and reset
+completion, to the timed automaton built from any backend automaton satisfying
+the stated propositional-language contract. Initial clock values remain
+existential in this theorem. Agreement with conventional zero initialization,
+the parser and external backend interface, and output printing are outside
+the result proved here.

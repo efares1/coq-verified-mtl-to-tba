@@ -1,0 +1,21 @@
+﻿# LaTeX auxiliary files (keep the final PDFs in build/).
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# Coq compiler output.
+proof/*.vo
+proof/*.vos
+proof/*.vok
+proof/*.glob
+proof/.*.aux
+
+# Editor and temporary output.
+*~
+*.swp

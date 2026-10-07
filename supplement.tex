@@ -1,0 +1,190 @@
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{xr}
+\externaldocument[main-]{build/paper1}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\Nat}{\mathbb{N}}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\satM}{\models_{\mathrm{MTL}}}
+\newcommand{\satL}{\models_{\mathrm{LTL}}}
+\newcommand{\Until}{\mathbin{\mathsf{U}}}
+\newcommand{\Release}{\mathbin{\mathsf{R}}}
+\newcommand{\hUntil}{\mathbin{\widehat{\mathsf{U}}}}
+\newcommand{\hRelease}{\mathbin{\widehat{\mathsf{R}}}}
+\newcommand{\Next}{\mathsf{X}}
+\newcommand{\Always}{\mathsf{G}}
+\newcommand{\Eventually}{\mathsf{F}}
+\newcommand{\WeakUntil}{\mathbin{\mathsf{W}}}
+\newcommand{\Reset}{\mathsf{rst}}
+\newcommand{\Unch}{\mathsf{unch}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\CVal}{\mathsf{val}}
+\newcommand{\CReset}{\mathsf{reset}}
+\newcommand{\elapsed}{\mathsf{elap}}
+\newcommand{\ewbase}{\mathsf{ew\_base}}
+\newcommand{\Node}{\mathsf{node}}
+
+\title{Supplementary Material for ``A Mechanically Verified Translation of MTL$_{0,\infty}$ into Timed B\"uchi Automata''}
+\author{Elie Fares, Jean-Paul Bodeveix, Hussain Al-Aqrabi, and Azar Salami}
+\begin{document}
+\maketitle
+
+This supplement gives the full reset-policy and residual-obligation proof,
+the omitted reset-completion arguments, and auxiliary clock arithmetic. The
+Coq source files used by the development are included in the accompanying
+\texttt{proof/} directory. Cross-references point to the main paper.
+
+\section{Omitted Proofs for the TBA Construction}
+\label{sec:supp-proofs}
+
+\subsection{Reset Completion}
+\label{subsec:reset-completion-proof}
+Proof of Lemma~\ref{main-lem:reset-completion}. The extension $\rho'$ is
+clock-consistent by construction. Consider a preservation clock $x$. If the
+cube taken at position $i$ contains $\Unch(x)$, then neither $\rho$ nor
+$\rho'$ resets $x$ at $i$; otherwise $\rho'$ resets it. Hence $\rho'$ resets
+$x$ wherever $\rho$ does, and the clock recurrence
+\eqref{main-eq:clock-update} gives, by induction on positions,
+$\CVal_{\rho'}(i,x)\le\CVal_\rho(i,x)$. The literals over $x$ are upper
+bounds, so remain true. Dually, $\rho'$ resets a restart clock only where
+the cube contains $\Reset(x)$, hence only where $\rho$ resets it. Therefore
+$\CVal_{\rho'}(i,x)\ge\CVal_\rho(i,x)$, and the lower-bound literals
+remain true. Action literals and the B\"uchi condition are unchanged, so the
+same run is accepting after completion (Coq lemma
+\texttt{complete\_complete}).
+
+\subsection{Exactness of Relaxation and Reset Completion}
+Proof of Proposition~\ref{main-prop:reset-completion}. For soundness, a run of the
+completed TBA gives a run of the relaxed automaton on the propositional word
+of its clock-consistent extension. The reset and preservation markers agree
+with the completed reset set, so the run satisfies every retained literal.
+By language preservation of relaxation and the backend contract, this word
+satisfies $\T(f)$. The soundness direction of
+Theorem~\ref{main-thm:encoding-correctness} gives $w,0\satM f$.
+
+For completeness, Theorem~\ref{main-thm:encoding-correctness} supplies a
+clock-consistent extension of $w$ satisfying $\T(f)$. The backend contract
+accepts its propositional word, and relaxation preserves that run. The
+reset-completion lemma then supplies an extension accepted by the completed
+TBA. The mechanized theorem is
+\texttt{MTL\_to\_TBA\_correct\_with}.
+
+\input{proof_details}
+
+\section{Auxiliary Lemmas of the Correctness Proof}
+\label{sec:supp-aux}
+\label{sec:supp-lemmas}
+This section records the semantic and arithmetic facts used in the proof of
+Theorem~\ref{main-thm:encoding-correctness}.
+
+\subsection{Basic LTL Semantic Lemmas}
+For every LTL formula $A$ and position $i$,
+\begin{align}
+\rho,i\satL \Always A &\Longleftrightarrow \forall j\ge i,\;\rho,j\satL A,\nonumber\\
+\rho,i\satL \Eventually A &\Longleftrightarrow \exists j\ge i,\;\rho,j\satL A,\nonumber\\
+\rho,i\satL \Always\Eventually A &\Longleftrightarrow
+  \forall n\ge i\;\exists j\ge n,\;\rho,j\satL A,\label{eq:sem-GF}\\
+\rho,i\satL A\WeakUntil B &\Longleftrightarrow
+  \Bigl(\exists j\ge i.\nonumber\\[-1mm]
+  &\qquad\rho,j\satL B\\[-1mm]
+  &\qquad\land\forall k\in[i,j).\\[-1mm]
+  &\qquad\quad\rho,k\satL A\Bigr)\nonumber\\
+  &\qquad\lor\forall j\ge i.\;\rho,j\satL A.\nonumber
+\end{align}
+These are Coq lemmas \texttt{LG\_semantics}, \texttt{LF\_semantics},
+\texttt{LGF\_semantics}, and \texttt{LW\_semantics}. Time divergence
+adds the following useful consequence: if $d\ge0$ and
+$\Always\Eventually B$ holds from $i$, some future $B$ occurs at physical
+distance at least $d$ from $i$ (Coq: \texttt{GF\_far}).
+
+\subsection{Clock Arithmetic}
+Clock consistency turns symbolic guards into elapsed-time inequalities.
+\begin{lemma}[Accumulation under preservation]
+\label{lem:clock-accumulation}
+If $x$ is not reset at any position in $[i,j)$, then
+\[
+\CVal_\rho(j,x)=\CVal_\rho(i,x)+\elapsed_w(i,j).
+\]
+\end{lemma}
+Since clock values are nonnegative, $\elapsed_w(i,j)\le\CVal_\rho(j,x)$.
+Thus an upper guard $x\le d$ at $j$ entails
+\begin{equation}
+\elapsed_w(i,j)\le d.
+\label{eq:upper-clock}
+\end{equation}
+An upper guard $x<d$ gives the strict version.
+
+\begin{lemma}[Clock value after a reset]
+\label{lem:clock-after-reset}
+If $x$ is reset at $i$ and $j\ge i+1$, then
+$\CVal_\rho(j,x)\le\elapsed_w(i,j)$. If it is not reset again before $j$,
+equality holds.
+\end{lemma}
+A later reset only makes the clock younger. Hence a lower guard gives
+\begin{equation}
+x\ge d\quad\Longrightarrow\quad
+d\le\CVal_\rho(j,x)\le\elapsed_w(i,j),
+\label{eq:lower-clock}
+\end{equation}
+and $x>d$ entails a strict lower bound. The Coq development proves these
+facts as \texttt{preserve\_accumulate},
+\texttt{after\_reset\_value\_le\_elapsed}, and
+\texttt{reset\_preserve\_value\_eq\_elapsed}.
+
+\subsection{Strict Bounds}
+\label{subsec:strict-bounds}
+The eight hatted constructors are the primitive proof families. Ordinary
+timed operators have already been reduced by
+Eqs.~\eqref{main-eq:derive-ule}--\eqref{main-eq:derive-rge}. Strict comparisons remain
+strict through each translation and proof case. In particular, preservation
+gives $\elapsed_w(i,j)\le\CVal_\rho(j,x)$, so $x<d$ implies
+$\elapsed_w(i,j)<d$. After a reset,
+$\CVal_\rho(j,x)\le\elapsed_w(i,j)$, so $x>d$ implies
+$\elapsed_w(i,j)>d$.
+
+The only strict case requiring more than direct guard arithmetic is the
+fairness branch of $\hUntil_{>d}$. Time divergence gives a future $q$ at
+distance at least $d$ from position $i+1$; strict timestamp increase gives
+$t_{i+1}>t_i$, hence the selected $q$ is at distance strictly greater than
+$d$ from $i$. This is the argument formalized in Coq lemma
+\texttt{sound\_UhatGt}.
+
+\section{Coq Result Map}
+\label{app:coq}
+The paper's principal statements correspond to these definitions and
+theorems in the included Coq development:
+\begin{table*}[t]
+\centering
+\caption{Location of the principal Coq results.}
+\label{tab:coq-result-map}
+\footnotesize
+\begin{tabular}{@{}p{0.30\textwidth}p{0.66\textwidth}@{}}
+\toprule
+Result & Coq source\\
+\midrule
+\texttt{EncodingCorrect\_proved} & \path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}\\
+\texttt{MTL\_to\_TBA\_correct\_with} & \path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}\\
+\texttt{T\_uses\_every\_clock} & \path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}\\
+\texttt{complete\_complete} & \path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}\\
+\bottomrule
+\end{tabular}
+\end{table*}
+The theorem with suffix \texttt{\_with} assumes the backend correctness
+contract as an argument. The development includes no project-specific
+assumption in that theorem beyond this explicit contract; the standard
+library assumptions are recorded by Coq's \texttt{Print Assumptions} output
+in the proof source.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}
