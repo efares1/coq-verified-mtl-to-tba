@@ -55,21 +55,20 @@
 \begin{abstract}
 We present a Rocq-verified semantic translation from pointwise dense-time
 $\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata, without
-location invariants and with existential initial clock valuations. The translation first
-expresses ordinary timed operators using hatted Until and Release primitives,
-encodes their timing constraints in clocked LTL, and then uses an arbitrary
-LTL-to-B\"uchi backend satisfying an explicit semantic contract. A relaxation
-and reset-completion construction turns the backend automaton into a timed B\"uchi
-automaton. The central proof difficulty is reuse: one clock is assigned to
-each distinct primitive timed subformula, even when activations of the same
-subformula overlap. We establish soundness and
-completeness by a canonical reset policy and residual obligations, and prove
-the semantic translation theorem \texttt{MTL\_to\_TBA\_correct\_with},
-conditional on the backend contract. The result
-preserves strict and non-strict bounds and does not depend on a particular
-LTL-to-B\"uchi implementation, provided it satisfies the stated contract.
-This theorem concerns an abstract translation pipeline: it does not establish
-an integrated compiler or a measured advantage over existing tools.
+location invariants and with existential initial clock valuations. The
+mechanized theorem covers well-formed core formulas: lower and strict upper
+bounds are positive, and non-strict upper bounds are nonnegative. We describe
+reductions for zero lower bounds and zero strict upper bounds, but do not
+mechanize this preprocessing. Ordinary timed operators are expressed through
+hatted Until and Release primitives, encoded in clocked LTL, and passed to an
+LTL-to-B\"uchi backend satisfying an explicit semantic contract. Relaxation
+and reset completion yield a timed B\"uchi automaton. The proof assigns one
+clock to each distinct primitive timed subformula, including overlapping
+activations. Soundness holds for every clock-consistent reset trace;
+completeness constructs a canonical trace using residual obligations. These
+arguments establish \texttt{MTL\_to\_TBA\_correct\_with}. The result covers strict and non-strict
+bounds within the stated core domain; it is an abstract translation result,
+not an integrated compiler or a performance comparison.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -97,9 +96,12 @@ across later activations? Table~\ref{tab:overlap-example} gives a trace, and
 the Rocq theorem answers this for the abstract translation under its backend
 contract.
 
-This paper gives a mechanized translation for the one-sided-bounded fragment
-$\mathrm{MTL}_{0,\infty}$~\cite{[RK90],[RTH96],[BDLG14]}. Its key construction
-assigns a clock to each \emph{distinct primitive timed subformula}, rather
+This paper gives a mechanized translation for well-formed core formulas in
+the one-sided-bounded fragment $\mathrm{MTL}_{0,\infty}$~
+\cite{[RK90],[RTH96],[BDLG14]}.
+Zero-bound source cases are reduced as described below; that preprocessing is
+not mechanized. Its key construction assigns a clock to each
+\emph{distinct primitive timed subformula}, rather
 than to each syntax-tree occurrence or run-time activation. The clocked-LTL
 encoding constrains that shared clock through reset and preservation markers.
 The proof's completeness direction chooses a canonical reset trace that
@@ -280,7 +282,8 @@ case must also be simplified: the $\ge0$ cases are the corresponding untimed
 Until and Release operators, and the $>0$ cases reduce to
 $p\land\Next(p\Until q)$ and $p\lor\Next(p\Release q)$,
 respectively. These reductions rely on the paper's strictly increasing event
-times and must be applied before constructing a Rocq formula. A zero strict
+times and must be applied before encoding a source formula as a Rocq core
+formula; the preprocessing itself is not mechanized. A zero strict
 upper bound has an empty interval: Until reduces to $\bot$ and Release to
 $\top$; strict upper-bound constructors in the core consequently require
 $d>0$. For the non-strict upper bound zero, the hatted future operators reduce
@@ -288,8 +291,8 @@ to $\hUntil_{\le0}\equiv\bot$ and $\hRelease_{\le0}\equiv\top$, because all
 strictly future events have positive elapsed time. The derived ordinary
 operators therefore both reduce to their right operand:
 $p\Until_{\le0}q\equiv q$ and $p\Release_{\le0}q\equiv q$. These reductions
-make the boundary explicit; non-strict upper bound zero is already included in
-the mechanized domain.
+make the boundary explicit: the mechanized domain excludes zero lower bounds
+and zero strict upper bounds, but includes non-strict upper bound zero.
 
 \begin{figure}[t]
 \centering

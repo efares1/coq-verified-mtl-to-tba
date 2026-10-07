@@ -69,17 +69,24 @@ same run is accepting after completion (Rocq lemma
 \subsection{Exactness of Relaxation and Reset Completion}
 Proof of Proposition~\ref{main-prop:reset-completion}. For soundness, a run of the
 completed TBA gives a run of the relaxed automaton on the propositional word
-of its clock-consistent extension. The reset and preservation markers agree
-with the completed reset set, so the run satisfies every retained literal.
-By language preservation of relaxation and the backend contract, this word
-satisfies $\T(f)$. The soundness direction of
-Theorem~\ref{main-thm:encoding-correctness} gives $w,0\satM f$.
+of its clock-consistent extension. At each position, the relaxed transition
+comes from an original backend cube. Reconstruct a valuation satisfying that
+cube by setting each relevant extended atom false when its negative literal
+was deleted, retaining values required by surviving literals, and choosing
+values for deleted irrelevant atoms as needed. The resulting word follows the
+same state sequence in the original backend automaton, so the backend contract
+makes it a model of $\T(f)$. The reconstructed and relaxed words agree on base
+atoms; on relevant extended atoms, relaxation can only change false to true.
+Since $\T(f)$ contains extended atoms only positively, it is upward closed in
+those atoms, so the relaxed word also satisfies $\T(f)$. The soundness
+direction of Theorem~\ref{main-thm:encoding-correctness} gives
+$w,0\satM f$.
 
 For completeness, Theorem~\ref{main-thm:encoding-correctness} supplies a
 clock-consistent extension of $w$ satisfying $\T(f)$. The backend contract
-accepts its propositional word, and relaxation preserves that run. The
-reset-completion lemma then supplies an extension accepted by the completed
-TBA. The mechanized theorem is
+therefore gives an accepting run of the original backend automaton.
+Relaxation preserves this run, and the reset-completion lemma supplies an
+extension accepted by the completed TBA. The mechanized theorem is
 \texttt{MTL\_to\_TBA\_correct\_with}.
 
 \input{proof_details}
