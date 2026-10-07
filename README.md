@@ -39,16 +39,39 @@ whose correctness meets the stated contract, and automaton export.
 ## Rocq proof
 
 The included proof was checked with Rocq 9.0.1 (OCaml 4.14.2, Rocq Platform
-2025.08). In PowerShell, set `$RocqBin` to the Platform `bin` directory,
-then compile and independently check both modules:
+2025.08). From the repository root in PowerShell, set `$RocqBin` to the
+Platform `bin` directory, then compile and independently check both modules
+and regenerate the assumption record:
 
-    $RocqBin = 'C:\Rocq-Platform~9.0~2025.08\bin'
-    Push-Location proof
-    & (Join-Path $RocqBin 'rocq.exe') --version
-    & (Join-Path $RocqBin 'rocq.exe') compile MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
-    & (Join-Path $RocqBin 'rocq.exe') compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
-    & (Join-Path $RocqBin 'rocq.exe') check -silent MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof
+```powershell
+$RocqBin = 'C:\Rocq-Platform~9.0~2025.08\bin'
+$Rocq = Join-Path $RocqBin 'rocq.exe'
+Push-Location -LiteralPath (Join-Path (Get-Location).Path 'proof')
+try {
+    & $Rocq --version
+    if ($LASTEXITCODE -ne 0) { throw 'Rocq version check failed' }
+
+    & $Rocq compile MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
+    if ($LASTEXITCODE -ne 0) { throw 'Core module compilation failed' }
+
+    & $Rocq compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
+    if ($LASTEXITCODE -ne 0) { throw 'Correctness module compilation failed' }
+
+    $proofModules = @(
+        'MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core'
+        'EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof'
+    )
+    & $Rocq check -silent @proofModules
+    if ($LASTEXITCODE -ne 0) { throw 'Independent Rocq checking failed' }
+
+    $assumptionOutput = & $Rocq compile CheckAssumptions.v
+    $assumptionExitCode = $LASTEXITCODE
+    $assumptionOutput | Out-File -FilePath ASSUMPTIONS.txt -Encoding utf8
+    if ($assumptionExitCode -ne 0) { throw 'Assumptions check failed' }
+} finally {
     Pop-Location
+}
+```
 
 Only the direct translation and correctness dependencies are included here.
 Paper 2 reuses these same shared-clock MTL-to-TBA Rocq proof modules as its
@@ -59,12 +82,8 @@ modules for real arithmetic and classical reasoning are required.
 
 The convenience theorem `MTL_to_TBA_correct` uses the core axiom
 `LTL_TO_BUCHI_CORRECT`. The theorem `MTL_to_TBA_correct_with`, stated in the
-paper, takes backend language equivalence as an explicit argument. To
-reproduce the assumption record after compiling the two modules above, run
-from `proof/`:
-
-& (Join-Path $RocqBin 'rocq.exe') compile CheckAssumptions.v | Out-File -FilePath ASSUMPTIONS.txt -Encoding utf8
-if ($LASTEXITCODE -ne 0) { throw 'Assumptions check failed' }
+paper, takes backend language equivalence as an explicit argument. The command
+block above writes the resulting assumptions to `proof/ASSUMPTIONS.txt`.
 
 ## Spot backend example
 

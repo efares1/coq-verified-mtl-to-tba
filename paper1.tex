@@ -1015,19 +1015,20 @@ Pnueli modalities into timed automata for finite and infinite timed
 words~\cite{mightyppl_tacas26}. Its compositional tester construction
 sequentializes overlapping obligations; the tool can emit networks or
 products for backends including Uppaal, TChecker, and
-LTSmin~\cite{mightyppl_tacas26}. The QEST+FORMATS 2026 follow-up adds an
-implemented treatment of punctual MTL, including
-$\Box(p\Rightarrow\Diamond_{=k}q)$, and reports an evaluation against
-TEMPORA~\cite{mightyppl_qest26}. This is a close tool-level comparator for
-the request/response use case, although its highlighted exact-time property
-differs from the within-bound example here. MightyPPL provides a runnable
-analysis pipeline; this paper proves a different assurance claim for a
-clocked-LTL factorization: one clock per distinct primitive timed subformula
-remains complete under arbitrarily repeated activations, including the strict
-and non-strict one-sided cases. We do not equate MightyPPL's reported punctual
-fragment with all of MTL$_{0,\infty}$, or claim that either work subsumes or
-outperforms the other. The included Rocq development is not integrated with
-MightyPPL or another checker and makes no performance claim.
+LTSmin~\cite{mightyppl_tacas26}. The QEST+FORMATS 2026 follow-up reports an
+implemented extension for the punctual response-property case
+$\Box(p\Rightarrow\Diamond_{=5}q)$ and an evaluation against
+TEMPORA~\cite{mightyppl_qest26}; this reported case does not establish support
+for general punctual MTL. We use MightyPPL as a qualitative comparator based
+on the published logic and assurance scopes: its papers describe an
+implemented analysis pipeline, whereas this paper proves a different
+assurance claim for a clocked-LTL factorization---one clock per distinct
+primitive timed subformula remains complete under arbitrarily repeated
+activations, including the strict and non-strict one-sided cases. This is not
+a head-to-head evaluation: we have not compared the tools on shared inputs or
+measured their relative coverage, performance, or clock counts. We do not
+claim that either work subsumes the other. The included Rocq development is not
+integrated with MightyPPL or another checker and makes no performance claim.
 
 \runinhead{Mechanized translations and trusted backends.}
 Mechanized work has verified LTL-to-B\"uchi translations and model
