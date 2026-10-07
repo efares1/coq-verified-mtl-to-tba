@@ -25,6 +25,17 @@ in proof/; no experiment or evaluation result is asserted in this paper.
 The proof theorem assumes the LTL-to-Büchi semantic contract stated in the
 paper. It does not claim that the external backend is verified.
 
+## Intended use and artifact boundary
+
+This is a proof artifact for developers of dense-time MTL verification tools.
+It verifies the semantic translation core and the formula-keyed clock policy
+under overlapping activations; it is not an executable compiler from MTL text
+to a timed automaton. The theorem targets event-guarded automata without
+location invariants and with existential initial clock valuations. A tool
+using conventional zero-initialized clocks needs a separate adapter, and a
+complete tool still needs input parsing, finite-bound encoding, a backend
+whose correctness meets the stated contract, and automaton export.
+
 ## Rocq proof
 
 The included proof was checked with Rocq 9.0.1 (OCaml 4.14.2, Rocq Platform
@@ -55,4 +66,8 @@ root in WSL with Spot 2.16 installed, regenerate that output with:
 The script checks the Spot version and records the exact clocked-LTL input
 and command. `worked_translation.tex` explains how the propositional cubes
 are reinterpreted as timed transitions and which later simplifications are
-outside the theorem.
+outside the theorem. The fixed example demonstrates the propositional backend
+stage; it does not run the Coq translation or verify Spot against the backend
+contract. The reset-completed TBA is shown in the paper, while general
+relaxation, initialization adaptation, and export are not implemented by this
+script.

@@ -66,7 +66,10 @@ that obligation overlap. We establish soundness and
 completeness by a canonical reset policy and residual obligations, and prove
 the end-to-end theorem \texttt{MTL\_to\_TBA\_correct\_with}. The result
 preserves strict and non-strict bounds and does not depend on a particular
-LTL-to-B\"uchi implementation.
+LTL-to-B\"uchi implementation, provided it satisfies the stated contract.
+The intended use is as a verified semantic component in property-automaton
+construction for timed model checking; this artifact is not a standalone
+source-to-automaton compiler.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -84,6 +87,13 @@ dense-time semantics of the formula. The translation itself is subtle: a
 timed subformula nested under an unbounded temporal operator may be activated
 without bound, and several instances of the same obligation may be pending at
 once.
+
+A concrete use is dense-time verification of a bounded-response property such
+as $\Box(\mathit{req}\Rightarrow\Diamond_{\le d}\mathit{ack})$. If a second
+request arrives before an acknowledgment, two response obligations overlap.
+A property-automaton generator can use the theorem to justify sharing the
+subformula clock while retaining the older deadline; Table~\ref{tab:overlap-example}
+traces two such requests and their common acknowledgment.
 
 This paper gives a mechanized translation for the one-sided-bounded fragment
 $\mathrm{MTL}_{0,\infty}$~\cite{[RK90],[RTH96],[BDLG14]}. Its key construction
@@ -116,7 +126,7 @@ Our contributions are:
   \item soundness and completeness of that encoding, including a canonical
         reset policy and residual obligations that justify one clock per
         distinct primitive timed subformula despite arbitrarily overlapping
-        activations;
+        activations, without dropping older pending deadlines;
   \item relaxation and reset completion, with an end-to-end Coq theorem for
         every LTL-to-B\"uchi backend satisfying the explicit correctness
         contract.
@@ -135,6 +145,10 @@ pipeline whose LTL-to-B\"uchi backend satisfies the stated contract. The
 included artifact is not a drop-in translator: parsing, finite numeric-bound
 encoding, backend invocation, zero-initialization adaptation, and automaton
 export remain outside this result.
+
+The Spot 2.16 example in Fig.~\ref{fig:translation-steps45} documents the
+propositional-backend interface, but the Coq proof does not establish Spot's
+correctness contract.
 
 The broad translation capability is not new: CASAAL already translates
 $\mathrm{MTL}_{0,\infty}$ formulas to timed automata. Our claim is the
