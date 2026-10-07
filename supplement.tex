@@ -40,8 +40,8 @@
 \begin{document}
 \maketitle
 
-This supplement gives the full reset-policy and residual-obligation proof,
-the omitted reset-completion arguments, and auxiliary clock arithmetic. The
+This supplement contains the detailed reset-policy and residual-obligation
+arguments, reset-completion proofs, and auxiliary clock arithmetic. The
 Coq source files used by the development are included in the accompanying
 \texttt{proof/} directory. The complete project and build instructions are at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}. Cross-references
@@ -169,10 +169,10 @@ theorems in the included Coq development.\par\smallskip
 \noindent\textbf{Proof source.} The Coq definitions of
 \texttt{EncodingCorrect\_proved} and
 \texttt{MTL\_to\_TBA\_correct\_with} are in
-\path{EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}.\par\smallskip
+\path{proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}.\par\smallskip
 \noindent\textbf{Core source.} The definitions of
 \texttt{T\_uses\_every\_clock} and \texttt{complete\_complete} are in
-\path{MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}.\par\smallskip
+\path{proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}.\par\smallskip
 The theorem with suffix \texttt{\_with} assumes the backend correctness
 contract as an argument. The development includes no project-specific
 assumption in that theorem beyond this explicit contract; the standard

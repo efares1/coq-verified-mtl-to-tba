@@ -1,4 +1,4 @@
-COQC ?= coqc
+COQC ?= rocq compile
 
 CORE = MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core
 PROOF = EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof

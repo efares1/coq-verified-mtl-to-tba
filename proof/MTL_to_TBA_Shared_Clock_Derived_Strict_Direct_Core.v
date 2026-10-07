@@ -1,5 +1,5 @@
 (*
-  MTL_to_TBA_Shared_Clock_Core.v
+  MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
 
   Concrete formal interface with syntactic sharing of identical timed subformula clocks
 
@@ -7,22 +7,9 @@
                     --LTL2BA--> Buchi
                     --reinterpret--> Timed Buchi
 
-  IMPORTANT AUDIT PROPERTY
-  ------------------------
-  This file contains:
-      * no Parameter declarations;
-      * no Variable/Hypothesis declarations;
-      * no Admitted/Abort;
-      * exactly ONE explicit project axiom:
-            LTL_TO_BUCHI_CORRECT.
-
-  All formerly abstract objects in the previous draft are concrete
-  Definitions/Inductives/Records below.
-
-  The proposition [EncodingCorrect] is the remaining mathematical theorem
-  that the semantic proof file must establish.  The final composition theorem
-  [MTL_to_TBA_correct_from_encoding] is fully proved from that theorem plus
-  the single external LTL-to-Buchi axiom.
+  The axiom [LTL_TO_BUCHI_CORRECT] abstracts the external LTL-to-Buchi
+  backend. The theorem with suffix [_with] in the companion proof file takes
+  this backend contract as an explicit hypothesis.
 
   Dense time is Coq's real-number type R.
 
@@ -36,7 +23,7 @@
   translation.
 *)
 
-Require Import Arith Lia List Bool Reals Lra.
+From Stdlib Require Import Arith Lia List Bool Reals Lra.
 Import ListNotations.
 Open Scope R_scope.
 
@@ -363,7 +350,7 @@ Proof.
       lia.
 Qed.
 
-Require Import Classical.
+From Stdlib Require Import Classical.
 
 Lemma MRle_derived_semantics :
   forall w i d p q,
@@ -538,7 +525,7 @@ Proof.
       intros k Hk. apply Hpall. lia.
 Qed.
 
-Require Import Classical.
+From Stdlib Require Import Classical.
 
 Lemma MRlt_derived_semantics :
   forall w i d p q,
@@ -637,7 +624,7 @@ Fixpoint timed_subformulas (f : mtl) : list mtl :=
 Definition Clock (root : mtl) : Type :=
   { x : mtl | In x (timed_subformulas root) }.
 
-Require Import Classical.
+From Stdlib Require Import Classical.
 
 (* Decidable equality of formulas; bounds are compared as real numbers. *)
 Definition mtl_eq_dec : forall f g : mtl, {f = g} + {f <> g}.
@@ -699,7 +686,7 @@ Qed.
 (* Boolean reflection of a proposition, by classical reasoning.  It is used
    only inside proofs, to build witness reset functions; it is never part of
    the extracted code. *)
-Require Import Description.
+From Stdlib Require Import Description.
 
 Definition bool_of_prop (P : Prop) : {b : bool | b = true <-> P}.
 Proof.
@@ -1931,19 +1918,3 @@ Proof.
   apply compile_with_correct_from_encoding; [exact Henc | | exact Hwf].
   intro s. apply ltl_to_buchi_correct.
 Qed.
-
-(* ====================================================================== *)
-(* 13. Audit notes                                                        *)
-(* ====================================================================== *)
-
-(*
-  Useful checks:
-
-      Search "Axiom".
-      Print Assumptions ltl_to_buchi_correct.
-      Print Assumptions MTL_to_TBA_correct_from_encoding.
-      Print Assumptions T_uses_every_clock.
-
-  There is exactly one explicit project axiom:
-      LTL_TO_BUCHI_CORRECT.
-*)

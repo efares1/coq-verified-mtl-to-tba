@@ -1,12 +1,12 @@
 \begin{tikzpicture}[x=1cm,y=1cm,lab/.style={fmlabel}]
-% Left: automaton returned by Spot (state numbers of Spot; 2 and 4 accepting)
+% Left: Spot 2.16 output; state IDs match examples/spot/worked_translation.dot.
 \begin{scope}[xshift=0cm]
   \node[fmnote,font=\small\bfseries] at (2.4,6.0) {Spot output};
-  \node[fmstate] (l0) at (0.0,4.8) {$0$};
-  \node[fmstate] (l1) at (0.0,2.4) {$1$};
-  \node[fmaccept] (l2) at (4.8,4.8) {$2$};
-  \node[fmstate] (l3) at (4.8,2.4) {$3$};
-  \node[fmaccept] (l4) at (2.4,0.0) {$4$};
+  \node[fmstate] (l0) at (0.0,4.8) {$2$};
+  \node[fmstate] (l1) at (0.0,2.4) {$3$};
+  \node[fmaccept] (l2) at (4.8,4.8) {$1$};
+  \node[fmstate] (l3) at (4.8,2.4) {$4$};
+  \node[fmaccept] (l4) at (2.4,0.0) {$0$};
   \draw[fmedge] (-1.0,4.8) -- (l0);
   \draw[fmedge] (l0) -- node[lab,left] {$!p\land\neg p\land\mathsf{rst}(y)$} (l1);
   \draw[fmedge] (l0) -- node[lab,above] {$p\land\neg p\land\mathsf{rst}(y)$} (l2);
@@ -21,14 +21,14 @@
   \draw[fmedge] (l4) edge[loop below,looseness=5] node[lab,below] {$\top$} (l4);
 \end{scope}
 
-% Right: relaxation and reset completion
+% Right: relaxation and reset completion, with the same Spot state IDs.
 \begin{scope}[xshift=9.6cm]
   \node[fmnote,font=\small\bfseries] at (2.4,6.0) {After relaxation and reset completion};
-  \node[fmstate] (r0) at (0.0,4.8) {$0$};
-  \node[fmstate] (r1) at (0.0,2.4) {$1$};
-  \node[fmaccept] (r2) at (4.8,4.8) {$2$};
-  \node[fmstate] (r3) at (4.8,2.4) {$3$};
-  \node[fmaccept] (r4) at (2.4,0.0) {$4$};
+  \node[fmstate] (r0) at (0.0,4.8) {$2$};
+  \node[fmstate] (r1) at (0.0,2.4) {$3$};
+  \node[fmaccept] (r2) at (4.8,4.8) {$1$};
+  \node[fmstate] (r3) at (4.8,2.4) {$4$};
+  \node[fmaccept] (r4) at (2.4,0.0) {$0$};
   \draw[fmedge] (-1.0,4.8) -- (r0);
   \draw[fmedge] (r0) -- node[lab,left] {$\begin{array}{r}\neg p\\/\;\mathsf{rst}(x),\mathsf{rst}(y)\end{array}$} (r1);
   \draw[fmedge] (r0) -- node[lab,above] {$p\land\neg p\;/\;\mathsf{rst}(x),\mathsf{rst}(y)$} (r2);

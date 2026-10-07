@@ -216,11 +216,11 @@ Section~\ref{sec:supp-lemmas}.
 \subsection{Residual Obligations and the Canonical Extension}
 \label{subsec:residuals}
 
-Soundness can reason about an arbitrary clock-consistent extension.  Completeness,
-however, must construct a reset trace that realizes the translation.  Following
-the canonical extended-word construction of CASAAL~\cite{li_spin7}, the proof
-does this using a deterministic canonical policy and residual predicates,
-adapted here to formula-keyed shared clocks.
+To prove soundness, we consider an arbitrary clock-consistent extension. To
+prove completeness, we construct a reset trace that realizes the translation.
+The construction follows the canonical extended-word construction of
+CASAAL~\cite{li_spin7}, adapting its deterministic reset policy and residual
+predicates to formula-keyed shared clocks.
 
 For upper-bounded Until, define
 \begin{align*}
@@ -293,8 +293,9 @@ decision $\mathsf{reset}^\star(F,i,v)$ is defined as follows:
   \item $F=p\hRelease_{>d}q$: the clock is \emph{preserved} iff
         $v\le d$, $\mathsf{RRes}^{>}(i,v,d,p,q)$, and $w,i\not\satM p$.
 \end{itemize}
-The canonical extension $\rho^\star=\mathsf{canonical\_ext}(\mathit{root},w)$
-has base word $w$ and, writing $u_i=\CVal_{\rho^\star}(i,x)$, clock values
+The canonical extension is
+$\rho^\star=\mathsf{canonical\_ext}(\mathit{root},w)$, with base word $w$.
+For each clock $x$, let $u_i=\CVal_{\rho^\star}(i,x)$. Then its clock values
 \[
   u_0=0,\qquad
   u_{i+1}=
@@ -303,7 +304,8 @@ has base word $w$ and, writing $u_i=\CVal_{\rho^\star}(i,x)$, clock values
     u_i+\Delta_i, & \text{otherwise},
   \end{cases}
 \]
-and reset decisions $\CReset_{\rho^\star}(i,x)=\mathsf{reset}^\star(x,i,u_i)$.
+and reset decisions satisfy
+$\CReset_{\rho^\star}(i,x)=\mathsf{reset}^\star(x,i,u_i)$.
 \end{definition}
 
 This is the Coq definition \texttt{reset\_\allowbreak{}policy} with
@@ -335,8 +337,8 @@ By construction,
 \label{eq:canonical-properties}
 \end{equation}
 
-The residual predicates above are the mechanized form of the clock-reuse
-principle stated informally in Section~\ref{subsec:clock-reuse}.  They allow the canonical policy to carry an older
+The residual predicates formalize the clock-reuse principle introduced in
+Section~\ref{subsec:clock-reuse}. They let the canonical policy carry an older
 reference forward without allocating a fresh clock for each activation.
 
 \subsection{Soundness of the Primitive Timed Translations}

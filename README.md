@@ -25,16 +25,34 @@ in proof/; no experiment or evaluation result is asserted in this paper.
 The proof theorem assumes the LTL-to-Büchi semantic contract stated in the
 paper. It does not claim that the external backend is verified.
 
-## Coq source
+## Rocq proof
 
-The two files needed for the clock-encoding and MTL-to-TBA theorems are
-included in proof/. From that directory, compile the core first, then the
-proof file:
+The included proof was checked with Rocq 9.0.1 (OCaml 4.14.2, Rocq Platform
+2025.08). In PowerShell, set `$RocqBin` to the Platform `bin` directory,
+then compile and independently check both modules:
 
-    coqc MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
-    coqc EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
+    $RocqBin = 'C:\Rocq-Platform~9.0~2025.08\bin'
+    Push-Location proof
+    & (Join-Path $RocqBin 'rocq.exe') --version
+    & (Join-Path $RocqBin 'rocq.exe') compile MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v
+    & (Join-Path $RocqBin 'rocq.exe') compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
+    & (Join-Path $RocqBin 'rocq.exe') check -silent MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof
+    Pop-Location
 
 Only the direct translation and correctness dependencies are included here;
 the generic optimization, export, initialization, and extraction sources are
 kept in the separate Paper 2 project. Standard Coq library modules for real
 arithmetic and classical reasoning are required.
+
+## Spot backend example
+
+The left automaton in the worked example is a TikZ redraw of the Spot 2.16
+output saved in `examples/spot/worked_translation.dot`. From the repository
+root in WSL with Spot 2.16 installed, regenerate that output with:
+
+    bash examples/spot/regenerate.sh
+
+The script checks the Spot version and records the exact clocked-LTL input
+and command. `worked_translation.tex` explains how the propositional cubes
+are reinterpreted as timed transitions and which later simplifications are
+outside the theorem.

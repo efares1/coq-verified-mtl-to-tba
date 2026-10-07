@@ -53,15 +53,16 @@
 \maketitle
 
 \begin{abstract}
-We present a Coq-verified translation from pointwise dense-time
-$\mathrm{MTL}_{0,\infty}$ to timed B\"uchi automata. The translation first
-reduces ordinary timed operators to strict hatted primitives, encodes their
-timing constraints in clocked LTL, and then uses an arbitrary LTL-to-B\"uchi
-backend satisfying an explicit semantic contract. A relaxation and reset
-completion construction turns the backend automaton into a timed B\"uchi
+We present a Coq-verified semantic translation from pointwise dense-time
+$\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata, without
+location invariants and with existential initial clock valuations. The translation first
+expresses ordinary timed operators using hatted Until and Release primitives,
+encodes their timing constraints in clocked LTL, and then uses an arbitrary
+LTL-to-B\"uchi backend satisfying an explicit semantic contract. A relaxation
+and reset-completion construction turns the backend automaton into a timed B\"uchi
 automaton. The central proof difficulty is reuse: one clock is assigned to
-each distinct primitive timed subformula, even when its obligation is
-activated repeatedly and overlaps itself. We establish soundness and
+each distinct primitive timed subformula, even when multiple activations of
+that obligation overlap. We establish soundness and
 completeness by a canonical reset policy and residual obligations, and prove
 the end-to-end theorem \texttt{MTL\_to\_TBA\_correct\_with}. The result
 preserves strict and non-strict bounds and does not depend on a particular
@@ -102,7 +103,10 @@ removes irrelevant negative extended-atom literals, and reset completion
 turns the relaxed cubes into timed transitions. The resulting theorem is
 mechanized in Coq for all eight hatted timed primitives, including strict
 bounds. The proof does not cover parsing, the interface to an external LTL
-translator, or output printing; these are outside the theorem.
+translator, or output printing; these are outside the theorem. The Coq
+syntax stores bounds as elements of $\Real$, so the result establishes
+semantic correctness for Coq-level formulas; it does not provide a finite
+textual encoding or an extracted executable compiler for numeric bounds.
 
 Our contributions are:
 \begin{itemize}
@@ -111,7 +115,8 @@ Our contributions are:
         derived by semantic identities;
   \item soundness and completeness of that encoding, including a canonical
         reset policy and residual obligations that justify one clock per
-        distinct timed subformula despite arbitrarily overlapping activations;
+        distinct primitive timed subformula despite arbitrarily overlapping
+        activations;
   \item relaxation and reset completion, with an end-to-end Coq theorem for
         every LTL-to-B\"uchi backend satisfying the explicit correctness
         contract.
@@ -124,6 +129,19 @@ canonical policy and its strict-bound cases appear in the supplementary
 material. This paper treats the translation through TBA construction; generic
 TBA optimization and UPPAAL export are separate contributions and are not
 needed for the theorem proved here.
+
+The theorem supplies a proof-backed semantic component for a verification
+pipeline whose LTL-to-B\"uchi backend satisfies the stated contract. The
+included artifact is not a drop-in translator: parsing, finite numeric-bound
+encoding, backend invocation, zero-initialization adaptation, and automaton
+export remain outside this result.
+
+The broad translation capability is not new: CASAAL already translates
+$\mathrm{MTL}_{0,\infty}$ formulas to timed automata. Our claim is the
+machine-checked soundness and completeness argument for this clocked-LTL
+factorization, in particular the formula-keyed clock policy under overlapping
+activations. We do not claim the first translation or an automaton-size
+advantage.
 
 \section{Logic and Semantic Model}
 \label{sec:logic}
@@ -172,6 +190,14 @@ The index intervals refer to event positions, whereas $t_j-t_i$ is physical
 time. This distinction is material when no event occurs exactly at a bound.
 The strict increase assumption excludes simultaneous events; divergence is
 used in the lower-bounded Until fairness argument.
+
+The Coq development represents action names by natural numbers rather than a
+parameterized finite type, and timed words may use any natural-number name.
+Each formula mentions finitely many names, so its semantics and generated
+labels distinguish actions only by equality or inequality with those names.
+Equivalently, the construction operates over the finite quotient induced by
+those action tests; this is the finite alphabet used in the mathematical
+presentation.
 
 The well-formedness condition requires $d>0$ for every lower bound and strict
 upper bound, and $d\ge0$ for a non-strict upper bound. Ordinary timed
@@ -223,47 +249,53 @@ in prior work~\cite{ouaknine_worrell_lics05,bouyer_chevalier_markey_fsttcs05,li_
 
 \subsection{Timed B\"uchi Automata}
 \label{sec:tba}
-A TBA is a tuple $\mathcal A=(L,\ell_0,X,E,\mathit{Acc},\mathit{Inv})$.
-Here $L$ is a finite set of locations, $X$ a finite set of clocks,
+The verified target is an event-guarded TBA
+$\mathcal A=(L,\ell_0,X,E,\mathit{Acc})$. Here $L$ is a finite set of
+locations, $\ell_0$ the initial location, $X$ a finite set of clocks,
 $E\subseteq L\times\mathsf{Lab}\times\mathsf{Guard}\times 2^X\times L$
-is a set of action-labelled transitions with guards and reset sets,
-$\mathit{Acc}\subseteq L$ is the B\"uchi set, and $\mathit{Inv}$ assigns a
-clock constraint to each location. A run on a timed word follows one
-transition per event, respects the invariant throughout each delay, tests
-guards at the event, and resets exactly the clocks on the transition.
-Acceptance requires infinitely many visits to $\mathit{Acc}$. For the
-translation theorem below, the initial clock values are existentially
-quantified. This matches the clock-consistent-extension semantics used by
-the Coq development; conventional zero initialization is a separate
-property. More explicitly, let $v_i$ be the valuation tested at event $i$,
-and let $\Delta_i=t_{i+1}-t_i$. A run is an infinite sequence
-$(\ell_i,v_i)_{i\ge0}$ with an initial nonnegative valuation $v_0$. At
-event $i$, it chooses $(\ell_i,\alpha,g,Z,\ell_{i+1})\in E$ such that the
-action satisfies $\alpha$, the event valuation satisfies $g$, and the
-invariant of $\ell_i$ holds throughout the delay since the preceding event.
-The post-transition valuation is
+is the set of action-labelled transitions with guards and reset sets, and
+$\mathit{Acc}\subseteq L$ the B\"uchi set. A run is a sequence
+$(\ell_i,v_i)_{i\ge0}$ starting at $\ell_0$; it follows one transition per
+event and visits $\mathit{Acc}$ infinitely often. If the selected edge at
+event $i$ is $(\ell_i,\alpha_i,g_i,Z_i,\ell_{i+1})$, then the event action
+must satisfy $\alpha_i$ and the valuation $v_i$ must satisfy every guard in
+$g_i$. There are no location invariants in this model: timing constraints
+are checked at the events of the timed word. This is the TBA record
+represented in Coq; the theorem does not cover a richer invariant-bearing
+automaton model without an additional encoding.
+
+Let $v_i$ be the clock valuation tested at event $i$ and
+$\Delta_i=t_{i+1}-t_i$. A transition at event $i$ tests $v_i$ before its
+reset decision; the next valuation is
 \[
 v_{i+1}(x)=
 \begin{cases}
-\Delta_i,&x\in Z,\\
-v_i(x)+\Delta_i,&x\notin Z,
+\Delta_i,&x\in Z_i,\\
+v_i(x)+\Delta_i,&\text{otherwise.}
 \end{cases}
 \]
-and must satisfy $\mathit{Inv}(\ell_{i+1})$. For $i>0$, the delay is
-$t_i-t_{i-1}$; the first event's pre-event valuation is existential. This
-event-indexed convention makes TBA clock values correspond directly to the
-clock values of an extended word.
+The initial nonnegative valuation $v_0$ is existentially quantified, as in
+the Coq clock-consistent-extension semantics. In the example below, the
+first transition resets the deadline clock at the origin event, and every
+outgoing transition from the waiting location checks the upper deadline.
+The standard zero-initialization convention is not assumed by the theorem.
 
 \section{Clocked-LTL Translation}
 \label{sec:translation}
 \subsection{Shared clock identities}
 The translation is structural. It maps Boolean and untimed temporal
 operators homomorphically and maps each primitive timed subformula to an LTL
-formula over an extended alphabet. The extended alphabet contains action
-atoms, clock comparisons $x\sim d$, a reset atom $\Reset(x)$, and a
-preservation atom $\Unch(x)$. These last atoms describe the clock update at
-the current event. Clock values are read before the event's reset, matching
-the guard semantics of a timed automaton.
+formula over an extended alphabet. For each action $a$, the extended
+alphabet contains distinct atoms $\mathsf{LAct}(a)$ and
+$\mathsf{LNAct}(a)$, as well as clock comparisons $x\sim d$, a reset atom
+$\Reset(x)$, and a preservation atom $\Unch(x)$. Under timed-word
+interpretation, the action atoms mean that the current action is $a$ or is
+different from $a$, respectively. The atom $\mathsf{LNAct}(a)$ and the
+negated literal of $\mathsf{LAct}(a)$ have the same timed-word interpretation,
+but remain distinct propositions to the unconstrained LTL backend. The reset
+and preservation atoms describe the clock update at the current event. Clock
+values are read before the event's reset, matching the guard semantics of a
+timed automaton.
 
 For formula $f$, let $\Clock(f)$ be its finite set of distinct primitive
 hatted timed subformulas. The clock associated with $F\in\Clock(f)$ is
@@ -300,7 +332,7 @@ strict and non-strict bound, give all eight primitive cases:
 \begin{align}
 \T_\pi(p\hUntil_{\precsim d}q)
  &=\Next\bigl(((x\precsim d)\land\Unch(x)\land P)\nonumber\\
- &\hspace{23mm}\WeakUntil((x\precsim d)\land Q)\bigr),\label{eq:t-hule}\\
+ &\hspace{23mm}\Until((x\precsim d)\land Q)\bigr),\label{eq:t-hule}\\
 \T_\pi(p\hUntil_{\succsim d}q)
  &=\Reset(x)\land\Next\bigl((P\Until((x\succsim d)\land(P\Until Q)))\nonumber\\
  &\hspace{23mm}\lor(\Always P\land\Always\Eventually Q)\bigr),\label{eq:t-huge}\\
@@ -312,18 +344,20 @@ strict and non-strict bound, give all eight primitive cases:
  &\hspace{23mm}\WeakUntil((P\Release Q)\lor((x\mathrel{\succsim^{\mathrm c}}d)\land P))\bigr).
  \label{eq:t-hrge}
 \end{align}
-All clock atoms occur positively. Upper-bounded hatted Until uses weak
-Until because a clock-consistent trace must eventually cross its finite
-upper bound if no endpoint is found. Lower-bounded Until retains its
+All clock atoms occur positively. Upper-bounded hatted Until uses strong
+Until, matching the mechanized clause: its witness must satisfy $q$ while the
+clock remains within the upper bound. On a clock-consistent trace over
+divergent time, an infinite continuation cannot keep the preservation guard
+true forever. Lower-bounded Until retains its
 fairness branch, including $\Always\Eventually Q$, so that eventuality is
-not lost. The other weak-Until clause marks the end of a bounded Release
-window. Strict comparisons are represented directly; no strict bound is
-weakened by adjusting its constant.
+not lost. The weak-Until clauses mark the end of bounded Release windows.
+Strict comparisons are represented directly; no strict bound is weakened by
+adjusting its constant.
 
 The clauses have four distinct temporal roles. For upper-bounded Until, the
 clock is tested before any new reset: while its value remains in the allowed
-window, $P$ must continue until $Q$ appears; if the bound is passed first,
-the weak-until tail requires the continuation to remain valid. For
+window, $P$ must continue until $Q$ appears. If the bound is passed first, no
+bounded witness exists and the strong-Until clause fails. For
 lower-bounded Until, a finite path waits for the threshold and then starts
 the unbounded $P\Until Q$ obligation. If the threshold is never reached,
 the second disjunct requires $P$ at every position and $Q$ infinitely often.
@@ -629,9 +663,9 @@ the first event. This is a property of the accepted timed language; it does
 not by itself establish equivalence with an automaton whose clocks must
 start at zero. For example, a first transition guarded by $x\ge1$ may be
 enabled for one existential initial value and disabled when the first event
-is at time zero. The conventional initialization question is therefore
-outside Theorem~\ref{thm:mtl-to-tba-correct}; the Coq result is stated for
-the existential convention used throughout the translation proof.
+is at time zero. The worked example avoids dependence on that value by
+resetting its deadline clock on the first transition. The conventional
+initialization question is otherwise outside Theorem~\ref{thm:mtl-to-tba-correct}.
 
 \input{worked_translation}
 
@@ -665,7 +699,7 @@ w,0\satM f\quad\Longleftrightarrow\quad
 \end{align*}
 \end{theorem}
 The existential quantifier over $\rho$ is taken jointly over all distinct
-timed subformulas. Soundness does not rely on choosing the canonical trace:
+primitive timed subformulas. Soundness does not rely on choosing the canonical trace:
 each clock may follow any reset pattern allowed by the encoding, provided its
 value recurrence is respected. Completeness is the more delicate half
 because all activations that share a formula-keyed clock must be served
@@ -719,67 +753,31 @@ soundness.
 
 \subsection{Proof structure}
 \label{subsec:proof-outline}
-The Coq proof separates the translation into local timed reasoning and
-structural composition. The local lemmas cover only the eight hatted
-constructors; Boolean, next, untimed Until and Release follow by induction.
-The ordinary timed operators have already been unfolded by the semantic
-identities, so they introduce no additional clock case. The full case-by-case
-proof and arithmetic lemmas are in Supplement~\ref{supp-sec:supp-proof}.
+The Coq proof separates local timed reasoning from structural composition.
+Boolean, next, and untimed Until/Release cases follow by induction; ordinary
+timed operators unfold to the hatted primitives. The full case analysis and
+arithmetic lemmas are in Supplement~\ref{supp-sec:supp-proof}.
 
-\runinhead{Policy-independent soundness.}
-Clock consistency supplies two inequalities. If $x$ is not reset on
-$[i,j)$, then
-$\CVal_\rho(j,x)=\CVal_\rho(i,x)+\elapsed_w(i,j)$, so its age at $j$ is at
-least the physical time elapsed since $i$. If $x$ was reset at $i$, then
-$\CVal_\rho(j,x)\le\elapsed_w(i,j)$; any subsequent reset only decreases
-its age. Thus an upper guard at a preserved endpoint entails the matching
-upper bound on elapsed time, while a lower guard after a reset entails the
-matching lower bound. The inequalities preserve strictness: $x<d$ implies
-elapsed time $<d$, and $x>d$ implies elapsed time $>d$.
+\runinhead{Soundness.}
+For any clock-consistent extension, a preserved clock accumulates elapsed
+time, while a reset clock is no greater than the time elapsed since its most
+recent reset. Thus the clock guards imply the corresponding elapsed-time
+bounds, with strict inequalities preserved. Until clauses provide the
+required endpoint and prefix; Release clauses cover their bounded windows.
+For lower-bounded Until, divergence justifies the fairness branch when the
+threshold is never reached. These arguments depend on clock consistency, not
+on the canonical reset policy.
 
-For upper-bounded hatted Until, the LTL Until provides an endpoint, its
-clock guard bounds the distance, and the translated left operand supplies
-the open-interval prefix. Lower-bounded hatted Until has a finite branch
-with a threshold guard and an infinite branch
-$\Always P\land\Always\Eventually Q$. The finite branch gives the lower
-bound directly; in the infinite branch, divergence supplies a sufficiently
-late $q$ witness. For strict lower bounds, strict monotonicity between
-positions $i$ and $i+1$ upgrades the distance from the $i+1$ tail to a
-strictly greater distance from the original reference. The two Release
-families use weak Until to express a bounded window: upper-bounded Release
-ends when the complementary upper test becomes true or when $p\land q$
-discharges the obligation; lower-bounded Release preserves its clock before
-the threshold until either $p$ discharges it or ordinary Release takes over.
-These arguments use no property of the reset policy beyond clock
-consistency.
-
-\runinhead{Completeness with one trace per formula.}
-Completeness uses the canonical extension from
-Definition~\ref{supp-def:canonical-policy}; the extension is shared by all
-occurrences and activations of each formula-keyed clock. For upper-bounded
-Until, the induction maintains, up to a selected endpoint $j$,
-\[
-\CVal_{\rho^\star}(n,x)+\elapsed_w(n,j)\precsim d.
-\]
-If an older reference remains useful, its residual ensures this inequality
-continues to hold and also covers newer activations. Otherwise the policy
-resets and starts the current obligation with the required remaining
-budget. The first suitable $q$ endpoint closes the weak-until requirement.
-The strict case uses the strict invariant with $<d$.
-
-For lower-bounded Until, each activation of a true formula resets its clock.
-If a threshold is reached, the finite branch of the translated formula
-continues with $P\Until Q$. If it is never reached, the active-obligation
-invariant implies that $p$ persists and $q$ recurs, yielding the fairness
-branch. For upper-bounded Release, restarting at a true activation lets the
-weak-until clause track the current bounded window until $p\land q$ or the
-complementary clock test ends it. For lower-bounded Release, the invariant
-is the corresponding residual predicate; while the policy preserves the
-clock, its value advances by $\Delta_i$, and the residual shifts from
-$(i,v)$ to $(i+1,v+\Delta_i)$. That shift retains the coverage of every
-position beyond the threshold. These cases establish the translated
-formula at each syntactic occurrence by induction, while the clock key
-identifies duplicate timed subformulas.
+\runinhead{Completeness.}
+The canonical extension assigns one reset trace to each formula-keyed clock.
+Residual predicates retain an older reference while it can still satisfy its
+obligation and cover newer activations; otherwise the policy resets for the
+current activation. This gives one clock trace for all overlapping
+activations of the same formula. For lower-bounded Until, if no threshold is
+reached, the active-obligation invariant yields the fairness branch. Strict
+cases use strict residuals and the strict increase of timestamps. The
+supplement gives the primitive-by-primitive induction and its arithmetic
+details.
 
 \begin{table}[t]
 \centering
@@ -837,9 +835,9 @@ Parser, backend process, output printer & Outside theorem\\
 \end{tabular}
 \end{table}
 
-\input{proof_arithmetic_main}
-\input{proof_cases_main}
-\input{proof_composition_main}
+The detailed arithmetic lemmas and primitive soundness and completeness cases
+are in Supplement~\ref{supp-sec:supp-aux}; the full reset-policy and
+composition arguments are in Supplement~\ref{supp-sec:supp-proofs}.
 
 \section{Related Work}
 \label{sec:related}
@@ -866,8 +864,10 @@ Clock sharing & \textbf{CASAAL:} Handled by the specialized timed construction. 
 MTL and its dense-time pointwise semantics have a substantial literature,
 including decidability and expressiveness results~\cite{[RK90],[RTH96],MTLsem,
 ouaknine_worrell_lics05,bouyer_chevalier_markey_fsttcs05}. The one-sided-bounded
-fragment is a useful compromise: full dense-time MTL does not in general admit
-finite timed-automaton translations, while MTL$_{0,\infty}$ retains common
+fragment is a useful compromise: unrestricted pointwise dense-time MTL does
+not admit a general effective translation of all formulas to finite ordinary
+timed automata. Results under bounded-variability assumptions or with
+alternating timed automata have different scopes~\cite{nickovic_piterman_formats10,[BM14]}; MTL$_{0,\infty}$ retains common
 response and separation requirements~\cite{[RTH96],[BDLG14]}. The hatted
 operators in this paper make the distinction between a timing reference and
 the current logical position explicit. They are primitive constructors in
@@ -909,6 +909,28 @@ formula and may face multiple overlapping activations of that same formula.
 The canonical trace resolves those competing references; its correctness is
 proved for each strict and non-strict primitive.
 
+\runinhead{Recent automata-based real-time verification.}
+Bouyer, Srivathsan, and Vishwanath improve an MTL-to-one-clock alternating
+timed automaton construction for finite timed words using explicit clock
+deactivation, identify a bounded-width fragment, and develop zone-based
+emptiness checking~\cite{bouyer_srivathsan_vishwanath_fossacs25}. Their
+alternating-automaton and zone-analysis setting differs from our infinite-word
+TBA target, but is closely related in its treatment of clock activity. Wang et al.
+formally verify a transformation from finite, discrete-time MLTL formulas to
+regular expressions~\cite{wang_mltl_tacas25}; this is adjacent mechanized
+translation work with a different time domain and output language. TEMPORA
+provides pointwise MITL model checking with past and future modalities using
+generalized timed automata and zone-based algorithms~\cite{akshay_et_al_tempora26}.
+It is an adjacent tool pipeline rather than
+an equivalent MTL$_{0,\infty}$-to-TBA translation.
+Ho et al. present MightyPPL, a compositional tool for pointwise MITL with past
+and Pnueli modalities that generates timed automata for finite and infinite
+timed words~\cite{mightyppl_tacas26}. Its construction merges overlapping
+obligations and bounds the number of identical component testers. This is a
+practical model-checking pipeline for a different logic and automaton
+architecture; our result instead proves a formula-keyed clock bound for
+MTL$_{0,\infty}$ and the stated event-guarded TBA semantics.
+
 \runinhead{Mechanized translations and trusted backends.}
 Mechanized work has verified LTL-to-B\"uchi translations and model
 checkers~\cite{schimpf_tphols09,cava_cav13,ltl_to_gba_afp,seidl_sickert_afp19}.
@@ -926,11 +948,14 @@ than claiming that Spot itself is verified.
 Table~\ref{tab:translation-contrast} summarizes how this modular proof
 boundary differs from CASAAL, the closest complete construction for the same
 one-sided-bounded fragment. The comparison concerns proof architecture and
-intended use; it does not claim a general automaton-size advantage.
+intended use; it does not claim a general automaton-size advantage. The
+clock-sharing row states the guarantee proved here; it does not imply that
+CASAAL allocates one clock per syntax-tree occurrence or uses more clocks.
 \section{Conclusion}
-We have presented a mechanically verified translation from
-$\mathrm{MTL}_{0,\infty}$ to timed B\"uchi automata. Hatted operators make
-the timing reference explicit; the clocked-LTL clauses cover strict and
+We have presented a mechanically verified semantic translation from
+$\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata without
+location invariants and with existential initial clock valuations. Hatted
+operators make the timing reference explicit; the clocked-LTL clauses cover strict and
 non-strict bounds; and relaxation with reset completion turns a correct
 propositional B\"uchi backend into a timed automaton. The canonical reset
 policy and residual obligations establish that one clock per distinct
@@ -938,8 +963,11 @@ primitive timed subformula suffices even with arbitrarily many overlapping
 activations. Coq proves both semantic preservation and the end-to-end result
 \texttt{MTL\_to\_TBA\_correct\_with} under the stated backend contract.
 
-The Coq development, proof sources, and build instructions for this paper are
-available in the project repository at
+The result is a proof-backed translation layer for real-time verification
+tools, rather than a standalone finite-input compiler. A practical pipeline
+still needs finite-bound encoding, backend integration, and any required
+initialization and export adapters. The Coq development, proof sources, and
+build instructions for this paper are available in the project repository at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}.
 
 \bibliographystyle{IEEEtran}

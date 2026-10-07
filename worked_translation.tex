@@ -4,17 +4,24 @@ Consider
 \[
   f=(\Eventually_{\le5}p)\land(\Always_{<2}\neg p).
 \]
-The property requires the first occurrence of $p$ to be no earlier than two
-and no later than five time units after the temporal origin. Figure~\ref{fig:translation-reference-tba}
-shows a small TBA for this language. The construction below follows the
-formula through the clocked-LTL intermediate language and the timed
+The property requires $p$ to be false at the temporal origin and at every
+later event less than two time units from it, and requires a $p$ event by age
+five. Figure~\ref{fig:translation-reference-tba} shows an equivalent,
+one-clock event-guarded TBA. Its first transition consumes the event at the
+origin, requires $\neg p$, and resets $x$. Under the event-indexed reset
+convention of Section~\ref{sec:tba}, the clock value at the next event is
+therefore the elapsed time since the origin. The construction below follows
+the formula through the clocked-LTL intermediate language and the timed
 reinterpretation.
 
 \begin{figure}[t]
 \centering
 \resizebox{0.88\columnwidth}{!}{\input{figures/fig_tba_example}}
-\caption{A two-location TBA for $f$. The first location enforces the deadline
-$x\le5$ and the guard $x\ge2$ requires $p$ only in the interval $[2,5]$.}
+\caption{An equivalent event-guarded TBA for $f$. The initial transition
+requires $\neg p$ and resets $x$. In the waiting location, every outgoing
+transition checks $x\le5$; the transition to the accepting location also
+requires $2\le x$. Thus $p$ can first hold only at an event whose age from
+the origin is in $[2,5]$.}
 \label{fig:translation-reference-tba}
 \end{figure}
 
@@ -46,12 +53,12 @@ The upper-bounded Until uses $x$ as a preservation clock. The lower test
 $y\ge2$ is the complement of the strict source bound $<2$; the Release clause
 therefore permits $p$ beginning exactly at age two.
 
-\item Spot translates $\T(f)$ into the propositional B\"uchi automaton on the
-left of Fig.~\ref{fig:translation-steps45}. It has five states and eleven
-cube-labeled transitions. Clock guards, reset markers, preservation markers,
-and action literals are independent propositions at this stage. In
-particular, the cubes containing both $p$ and $\neg p$ are propositionally
-satisfiable to Spot.
+\item A Spot backend output for $\T(f)$ is shown on the left of
+Fig.~\ref{fig:translation-steps45}. Its cube labels illustrate that clock
+guards, reset markers, preservation markers, and action atoms are independent
+propositions at this stage. In particular, cubes containing both $p$ and
+$\neg p$ are propositionally satisfiable to the backend. The diagram is an
+illustrative output, not a state-size or performance result.
 
 \item Relaxation removes negative literals over extended clock atoms, and
 reset completion assigns resets according to the clock class: $x$ is reset
@@ -65,11 +72,12 @@ the unsatisfiable action cubes and simplifies the automaton.
 \begin{figure*}[!t]
 \centering
 \resizebox{\textwidth}{!}{\input{figures/fig_steps45}}
-\caption{Generated automata for the worked formula. Left: Spot's B\"uchi
-automaton, before timed reinterpretation. Right: after relaxation and reset
-completion. Here $!p$ is the negative literal of the extended atom $p$,
-whereas $\neg p$ is an action proposition; their conjunction is retained
-until the separate TBA optimization stage. Edges on the right are labeled
-``guard, action / resets.''}
+\caption{Spot 2.16 output (TikZ redraw, left; raw DOT and input in
+\texttt{examples/spot/}) and reset-completed TBA (right; same state IDs).
+Here $p=\mathsf{LAct}(p)$, $\neg p=\mathsf{LNAct}(p)$, and $!p$ is the
+literal negation of $\mathsf{LAct}(p)$. Timed semantics makes $!p$ and
+$\neg p$ redundant action exclusions; duplicate exclusions are suppressed,
+while $p\land\neg p$ remains for the later TBA simplification. Edges on the
+right are labeled ``guard, action / resets.''}
 \label{fig:translation-steps45}
 \end{figure*}

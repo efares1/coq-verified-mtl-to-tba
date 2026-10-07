@@ -34,7 +34,7 @@
   EncodingCorrect as an assumption.
 *)
 
-Require Import
+From Stdlib Require Import
   Arith Lia List Bool Reals Lra
   Classical ClassicalDescription.
 
@@ -4135,13 +4135,3 @@ Proof.
     [exact EncodingCorrect_proved | exact HA | exact Hwf].
 Qed.
 Print Assumptions MTL_to_TBA_correct_with.
-(*
-  Intended audit after compilation:
-
-      Print Assumptions EncodingCorrect_proved.
-      Print Assumptions MTL_to_TBA_correct.
-
-  EncodingCorrect_proved should have no project-specific assumptions.
-  MTL_to_TBA_correct should depend only on LTL_TO_BUCHI_CORRECT
-  (plus any standard logical principles imported from Coq.Classical).
-*)
