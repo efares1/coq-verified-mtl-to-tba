@@ -163,6 +163,27 @@ execute. The result justifies this clock-sharing architecture; it establishes
 neither a clock-count advantage over CASAAL nor a runtime or automaton-size
 improvement.
 
+A proof-only instance makes this assurance contract concrete. The Rocq module
+\texttt{proof/OverlappingResponse\_Example.v} defines
+$f_{\mathit{alarm}}=\mathsf{G}(\mathit{alarm}\Rightarrow
+\Diamond_{\le 3}\mathit{handled})$ as
+\texttt{MR MFalse (MOr (MNotAtom ALARM) (MUle 3 MTrue (MAtom HANDLED)))},
+where \texttt{ALARM} and \texttt{HANDLED} are actions 1 and 2. Its only
+primitive timed subformula is $\widehat{\mathsf{U}}_{\le 3}\,\top\,
+\mathit{handled}$, so the formula uses one formula-keyed clock across all
+alarm events. For a propositional B\"uchi automaton $A$, the module retains the
+explicit premise $\forall s:\mathit{pword}(f_{\mathit{alarm}}),\
+\mathit{PBA\_accepts}(A,s)\leftrightarrow
+\mathit{psat}(s,0,T(f_{\mathit{alarm}}))$. Under this premise, Rocq checks
+the instance $\forall w,\ \mathit{msat}(w,0,f_{\mathit{alarm}})\leftrightarrow
+\mathit{TBA\_accepts}(\mathit{compile\_with}(A),w)$ for every timed word in
+the development's domain. Thus two alarms at times 0 and 2 followed by a
+handled event at time 4 violate the source property and are rejected by the
+event-guarded TBA, even though the later alarm is handled on time. This
+instance does not discharge the backend premise or materialize an automaton;
+it stops at the theorem's event-guarded TBA semantics and includes no
+optimization, initialization adapter, export, or checker run.
+
 To transfer this result into an executable tool, a consumer must implement the
 target semantics: event-guarded transitions without location invariants and
 existential initial clock values. Parsing, finite textual encoding of bounds,

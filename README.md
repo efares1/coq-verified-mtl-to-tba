@@ -57,9 +57,13 @@ try {
     & $Rocq compile EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v
     if ($LASTEXITCODE -ne 0) { throw 'Correctness module compilation failed' }
 
+    & $Rocq compile OverlappingResponse_Example.v
+    if ($LASTEXITCODE -ne 0) { throw 'Overlapping-response example compilation failed' }
+
     $proofModules = @(
         'MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core'
         'EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof'
+        'OverlappingResponse_Example'
     )
     & $Rocq check -silent @proofModules
     if ($LASTEXITCODE -ne 0) { throw 'Independent Rocq checking failed' }
@@ -73,9 +77,10 @@ try {
 }
 ```
 
-Only the direct translation and correctness dependencies are included here.
-Paper 2 reuses these same shared-clock MTL-to-TBA Rocq proof modules as its
-upstream translation, then adds the generic TBA optimization and export proofs,
+The proof-only example specializes the shared-clock translation theorem;
+it does not add a backend implementation or an exported automaton. Paper 2
+reuses the core translation and correctness modules as its upstream result,
+then adds the generic TBA optimization and export proofs,
 initialization adapter, extraction, implementation, and evaluation. Those
 downstream results are outside this paper's claims. Standard Rocq library
 modules for real arithmetic and classical reasoning are required.
