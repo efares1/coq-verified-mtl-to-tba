@@ -1015,9 +1015,8 @@ $\mathsf{LUnch}(x)$ by $U$. Spot receives the exact clocked-LTL formula
 \]
 Spot 2.16's input and output are saved in
 \texttt{examples/spot/alarm\_response\_backend.ltl} and
-\texttt{examples/spot/alarm\_response\_backend.dot}. Splitting its disjunctive
-edge from state 0 gives this automaton (initial state 0, accepting set
-$\{0,1\}$):
+\texttt{examples/spot/alarm\_response\_backend.dot}. The generated graph has
+initial state 0, accepting set $\{0,1\}$, and these transitions:
 \[
 \begin{array}{c|c|l}
 \text{source}&\text{target}&\text{label}\\ \hline
@@ -1030,7 +1029,8 @@ $\{0,1\}$):
 \end{array}
 \]
 The graph is manually transcribed as
-\texttt{alarm\_response\_spot\_backend}. Lemma
+\texttt{alarm\_response\_spot\_backend}; Rocq splits the disjunctive
+self-loop into two cubes. Lemma
 \texttt{alarm\_response\_T\_eq} matches its input to the Rocq translation;
 \texttt{alarm\_response\_spot\_backend\_contract} proves that the transcribed
 automaton has exactly that LTL language on all propositional words. This
