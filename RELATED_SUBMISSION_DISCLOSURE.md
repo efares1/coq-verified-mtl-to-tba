@@ -1,43 +1,46 @@
-# Related manuscript disclosure
+# How to submit the two related papers
 
-The two papers share the same Rocq translation proof modules; Paper 2 extends
-the pipeline after TBA construction. The status below reflects the current
-pre-submission plan and must be updated if either manuscript's status changes
-before the cover letters are sent. Attach the complete companion manuscript.
+Use one cover letter per manuscript. Upload the TSE letter with the TSE paper
+and the IEEE Access letter with the IEEE Access paper. Address each to that
+journal's editor-in-chief. The letters are for the editor, not individual peer
+reviewers. If a submission portal offers a cover-letter upload, use that. If it
+offers only a confidential editor-comments box, paste the corresponding letter
+there.
 
-The shared proof sources are `proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v`
-and `proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v` in both
-repositories. Paper 2's additional generic pass proofs are in
+## What to disclose
+
+The papers should identify their relationship openly. Paper 2 cites the TSE
+manuscript. Paper 1 now cites the companion IEEE Access manuscript. Both cite
+the exact shared upstream Rocq translation proof. Paper 1 claims the translation
+and its correctness theorem; Paper 2 treats that theorem as a prerequisite and
+claims generic TBA optimization and export proofs, an extracted implementation,
+and its evaluation. This is a disclosure of two distinct companion articles,
+not a claim that either article is under consideration at both journals.
+
+The shared source files are
+`proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v` and
+`proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v`. The
+additional Paper 2 pass proofs are
 `proof/MTL_to_TBA_Invariants.v`, `proof/MTL_to_TBA_Optimizations.v`, and
 `proof/MTL_to_TBA_Export.v`.
 
-## Cover letter for Paper 1 (IEEE TSE)
+## What to upload
 
-Our related manuscript, “Mechanically Verified Optimization and UPPAAL Export
-for Timed Büchi Automata,” is being prepared for submission to IEEE Access.
-The manuscripts share the Rocq development for the
-upstream MTL-to-TBA translation, including the shared-clock correctness proof.
-This TSE submission presents that translation result, particularly its
-completeness argument under overlapping activations. The IEEE Access
-manuscript reuses the same proof as its upstream component and adds distinct
-generic TBA optimization and export proofs, an extracted implementation, and
-benchmark and UPPAAL case-study evaluation. This TSE submission does not claim
-those downstream results. We provide both manuscripts so the editor can assess
-the overlap and the separate contributions.
+At each journal, answer the submission questions about related or concurrent
+submissions accurately. If the portal has a related-manuscript or editor-only
+file category, upload the complete companion paper there so the editor can
+inspect the overlap. If it has no such category, disclose the companion in the
+confidential editor-comments field and follow the portal's instructions for
+providing the related manuscript. Do not include the other paper as public
+supplementary material.
 
-## Cover letter for Paper 2 (IEEE Access)
+Use the same companion-paper version that is being submitted to the other
+journal. Before submission, check that the portal's author list and
+corresponding-author contact match the manuscript.
 
-Our related manuscript, “A Mechanically Verified Translation of
-MTL$_{0,\infty}$ into Timed Büchi Automata,” is being prepared for submission to IEEE Transactions on Software Engineering.
-The manuscripts share the Rocq
-development for the upstream
-MTL-to-TBA translation, including the shared-clock correctness proof. This
-IEEE Access submission reuses that proof as the upstream component of the
-integrated tool; it does not present the translation proof as a new result.
-Its distinct contributions are generic language-preservation proofs for TBA
-optimization and UPPAAL-oriented export, the extracted implementation, and the
-evaluation. We provide both manuscripts so the editor can assess the overlap
-and the separate contributions.
+## Files
 
-Before sending, confirm the status sentence and ensure the attached manuscripts
-and included Rocq proof modules match the versions submitted to each journal.
+- `submission_letters/IEEE_TSE_Cover_Letter.pdf` and the `.tex` source are for
+  the TSE submission.
+- `submission_letters/IEEE_Access_Cover_Letter.pdf` and the `.tex` source are
+  for the IEEE Access submission.

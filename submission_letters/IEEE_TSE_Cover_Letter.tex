@@ -1,0 +1,38 @@
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=0.9in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{url}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+\begin{document}
+\begin{flushright}
+Elie Fares, Corresponding Author\\
+Higher Colleges of Technology\\
+Sharjah, United Arab Emirates\\
+\texttt{efares@hct.ac.ae}
+\end{flushright}
+
+8 October 2026
+
+Editor-in-Chief\\
+\emph{IEEE Transactions on Software Engineering}
+
+\textbf{Re: Submission of ``A Mechanically Verified Translation of MTL$_{0,\infty}$ into Timed B\"uchi Automata''}
+
+Dear Editor-in-Chief,
+
+On behalf of my coauthors, I submit ``A Mechanically Verified Translation of MTL$_{0,\infty}$ into Timed B\"uchi Automata'' for consideration by \emph{IEEE Transactions on Software Engineering}. The paper presents a Rocq-mechanized semantic translation from pointwise dense-time MTL$_{0,\infty}$ to event-guarded timed B\"uchi automata. Its central result establishes soundness and completeness while reusing one clock per distinct primitive timed subformula, including across repeated and overlapping activations. The theorem is conditional on an explicit semantic contract for the untimed B\"uchi backend and on the stated Rocq proof assumptions.
+
+The software-engineering contribution is a reusable assurance result for a timed-property automaton generator: under that contract, formula-keyed clock reuse preserves the timed language even when activations overlap. The paper defines the boundary of that guarantee; it does not claim an integrated compiler or an evaluation of a deployed end-to-end tool.
+
+We are also submitting a distinct companion manuscript, ``Mechanically Verified Optimization and UPPAAL Export for Timed B\"uchi Automata,'' separately to IEEE Access. Both manuscripts contain the same upstream Rocq modules for the shared translation and its correctness proof. This TSE paper presents and proves the translation result. The IEEE Access paper treats that result as a prerequisite and contributes generic language-preserving TBA optimization and export proofs, an extracted implementation, and an evaluation. The TSE submission does not claim those downstream contributions; the relationship is identified in both manuscripts and in the companion manuscript's citation to this paper.
+
+This manuscript is original, has not been published, and is not under consideration by another venue. It is a distinct article from the separately submitted IEEE Access companion manuscript; the shared proof material is disclosed above rather than claimed as two independent results. The complete companion manuscript is supplied as related material for editorial assessment.
+
+Thank you for considering our submission.
+
+Sincerely,\\[0.3em]
+Elie Fares\\
+for the coauthors: Jean-Paul Bodeveix, Hussain Al-Aqrabi, and Azar Salami
+\end{document}
