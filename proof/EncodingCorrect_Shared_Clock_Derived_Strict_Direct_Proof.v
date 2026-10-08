@@ -273,19 +273,25 @@ Definition rgt_residual
     msat w j q \/
     exists k, (i <= k < j)%nat /\ msat w k p.
 
-Definition decide (P : Prop) : bool := decide_b P.
+Definition decide (P : Prop) : bool :=
+  if excluded_middle_informative P then true else false.
 
 Lemma decide_true :
   forall P, decide P = true <-> P.
-Proof. intro P. exact (decide_b_spec P). Qed.
+Proof.
+  intro P. unfold decide.
+  destruct (excluded_middle_informative P) as [HP|HnP]; simpl.
+  - split; [intros _; exact HP|intros _; reflexivity].
+  - split; intro H; [discriminate|contradiction].
+Qed.
 
 Lemma decide_false :
   forall P, decide P = false <-> ~ P.
 Proof.
-  intro P. pose proof (decide_true P) as HP.
-  destruct (decide P); split; intro H; try reflexivity; try discriminate.
-  - exfalso. apply H. apply HP. reflexivity.
-  - intro Hp. apply HP in Hp. discriminate.
+  intro P. unfold decide.
+  destruct (excluded_middle_informative P) as [HP|HnP]; simpl.
+  - split; intro H; [discriminate|contradiction].
+  - split; [intros _; exact HnP|intros _; reflexivity].
 Qed.
 
 Lemma negb_decide_false_elim :
