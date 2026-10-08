@@ -34,7 +34,7 @@
   EncodingCorrect as an assumption.
 *)
 
-From Stdlib Require Import
+From Coq Require Import
   Arith Lia List Bool Reals Lra
   Classical ClassicalDescription.
 

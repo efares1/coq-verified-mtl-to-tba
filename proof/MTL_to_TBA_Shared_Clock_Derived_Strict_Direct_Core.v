@@ -23,7 +23,7 @@
   translation.
 *)
 
-From Stdlib Require Import Arith Lia List Bool Reals Lra.
+From Coq Require Import Arith Lia List Bool Reals Lra.
 Import ListNotations.
 Open Scope R_scope.
 
@@ -352,7 +352,7 @@ Proof.
       lia.
 Qed.
 
-From Stdlib Require Import Classical.
+From Coq Require Import Classical.
 
 Lemma MRle_derived_semantics :
   forall w i d p q,
@@ -527,7 +527,8 @@ Proof.
       intros k Hk. apply Hpall. lia.
 Qed.
 
-From Stdlib Require Import Classical.
+From Coq Require Import Classical.
+From Coq Require Import Logic.IndefiniteDescription.
 
 Lemma MRlt_derived_semantics :
   forall w i d p q,
@@ -626,7 +627,7 @@ Fixpoint timed_subformulas (f : mtl) : list mtl :=
 Definition Clock (root : mtl) : Type :=
   { x : mtl | In x (timed_subformulas root) }.
 
-From Stdlib Require Import Classical.
+From Coq Require Import Classical.
 
 (* Decidable equality of formulas; bounds are compared as real numbers. *)
 Definition mtl_eq_dec : forall f g : mtl, {f = g} + {f <> g}.
@@ -684,27 +685,6 @@ Proof.
   - discriminate.
   - intros _. assumption.
 Qed.
-
-(* Boolean reflection of a proposition, by classical reasoning.  It is used
-   only inside proofs, to build witness reset functions; it is never part of
-   the extracted code. *)
-From Stdlib Require Import Description.
-
-Definition bool_of_prop (P : Prop) : {b : bool | b = true <-> P}.
-Proof.
-  apply constructive_definite_description.
-  destruct (classic P) as [H|H].
-  - exists true. split; [tauto|].
-    intros b Hb. destruct b; [reflexivity|]. apply Hb in H. discriminate.
-  - exists false. split; [split; [discriminate | contradiction]|].
-    intros b Hb. destruct b; [|reflexivity].
-    exfalso. apply H. apply Hb. reflexivity.
-Defined.
-
-Definition decide_b (P : Prop) : bool := proj1_sig (bool_of_prop P).
-
-Lemma decide_b_spec : forall P, decide_b P = true <-> P.
-Proof. intro P. exact (proj2_sig (bool_of_prop P)). Qed.
 
 (* ====================================================================== *)
 (* 6. Extended words and clocks                                           *)
@@ -1290,32 +1270,6 @@ Proof.
 Qed.
 
 (* ====================================================================== *)
-(* 9c. Choice of a transition along a run                                 *)
-(* ====================================================================== *)
-
-(* The first element of a list that satisfies [P] (classical decision). *)
-Fixpoint first_such {A : Type} (P : A -> Prop) (l : list A) : option A :=
-  match l with
-  | [] => None
-  | x :: l' => if decide_b (P x) then Some x else first_such P l'
-  end.
-
-Lemma first_such_spec :
-  forall (A : Type) (P : A -> Prop) (l : list A),
-    (exists x, In x l /\ P x) ->
-    exists x, first_such P l = Some x /\ In x l /\ P x.
-Proof.
-  intros A P l. induction l as [|y l IH]; intros [x [Hx HP]]; [contradiction|].
-  simpl. destruct (decide_b (P y)) eqn:E.
-  - exists y. split; [reflexivity|]. split; [left; reflexivity|].
-    apply decide_b_spec. exact E.
-  - destruct Hx as [<-|Hx].
-    + exfalso. apply decide_b_spec in HP. congruence.
-    + destruct (IH (ex_intro _ x (conj Hx HP))) as [z [Hz [Hin HPz]]].
-      exists z. split; [exact Hz|]. split; [right; exact Hin | exact HPz].
-Qed.
-
-(* ====================================================================== *)
 (* 9d. Decidable equality of atoms                                        *)
 (* ====================================================================== *)
 
@@ -1439,8 +1393,9 @@ Proof.
     apply filter_In in Ht. destruct Ht as [Ht Hc].
     exists t. split; [exact Ht|]. split; [exact Hc|]. split; [exact Hs|].
     split; [exact Hd | exact Hl]. }
-  set (lab := fun i => match first_such (P i) (pb_trans A) with
-                       | Some t => pt_label t | None => [] end).
+  apply functional_choice in Hex.
+  destruct Hex as [tr tr_spec].
+  set (lab := fun i => pt_label (tr i)).
   set (s' := fun i (a : latom root) =>
                if is_ext a
                then (In (a, true) (lab i) /\ ~ In a F) \/ (s i a /\ ~ In (a, false) (lab i))
@@ -1448,12 +1403,12 @@ Proof.
   assert (Hrun : PBA_accepts A s').
   { exists run. split; [exact Hinit|]. split; [|exact Hacc].
     intro i. split; [exact (proj1 (Hsteps i))|].
-    destruct (first_such_spec (Hex i)) as [t [Hfs [Ht [Hc [Hs [Hd Hl]]]]]].
+    destruct (tr_spec i) as [Ht [Hc [Hs [Hd Hl]]]].
+    set (t := tr i).
     exists t. split; [exact Ht|]. split; [exact Hs|]. split; [exact Hd|].
-    assert (Hlab : lab i = pt_label t) by (unfold lab; rewrite Hfs; reflexivity).
     apply Forall_forall. intros [a b] Hab.
     rewrite Forall_forall in Hl. simpl in Hl.
-    unfold plit_holds. simpl. unfold s'. rewrite Hlab.
+    unfold plit_holds. simpl. unfold s'.
     destruct (is_ext a) eqn:Hext.
     - destruct b.
       + destruct (in_atoms a F) eqn:HF.
@@ -1702,6 +1657,7 @@ Qed.
    those of [rho] are, so their values are smaller and their upper bounds
    still hold; restart clocks of [rho'] are reset only where those of [rho]
    are, so their values are larger and their lower bounds still hold. *)
+
 Lemma complete_complete :
   forall A (rho : ext_word root),
     clock_consistent rho -> labels_ok A -> PBA_accepts A (word_of rho) ->
@@ -1715,13 +1671,9 @@ Proof.
               Forall (plit_holds (word_of rho) i) (pt_label t)).
   assert (Hex : forall i, exists t, In t (pb_trans A) /\ P i t).
   { intro i. destruct (Hsteps i) as [_ [t [Ht H]]]. exists t. split; assumption. }
-  set (lab := fun i => match first_such (P i) (pb_trans A) with
-                       | Some t => pt_label t | None => [] end).
-  assert (Hlab : forall i, exists t, first_such (P i) (pb_trans A) = Some t /\
-                   In t (pb_trans A) /\ P i t /\ lab i = pt_label t).
-  { intro i. destruct (first_such_spec (Hex i)) as [t [Hf [Ht HP]]].
-    exists t. split; [exact Hf|]. split; [exact Ht|]. split; [exact HP|].
-    unfold lab. rewrite Hf. reflexivity. }
+  apply functional_choice in Hex.
+  destruct Hex as [tr tr_spec].
+  set (lab := fun i => pt_label (tr i)).
   set (r := fun i x => if In_dec (@clock_eq_dec root) x (comp_resets (lab i))
                        then true else false).
   set (rho' := {| ew_base := ew_base rho;
@@ -1732,12 +1684,17 @@ Proof.
       try reflexivity; try assumption; try discriminate; contradiction. }
   (* the literals of the chosen cube hold on rho *)
   assert (Hsat : forall i a b, In (a, b) (lab i) -> plit_holds (word_of rho) i (a, b)).
-  { intros i a b Hin. destruct (Hlab i) as [t [_ [_ [[_ [_ Hl]] Heq]]]].
-    rewrite Heq in Hin. rewrite Forall_forall in Hl. exact (Hl _ Hin). }
+  { intros i a b Hin.
+    assert (P i (tr i)) by (destruct (tr_spec i); tauto).
+    destruct H as [h1 [h2 h3]].
+    rewrite Forall_forall in h3.
+    exact (h3 _ Hin). }
   assert (Hok' : forall i a b, In (a, b) (lab i) -> is_ext a = true ->
                    b = true /\ atom_ok a).
-  { intros i a b Hin Hext. destruct (Hlab i) as [t [_ [Ht [_ Heq]]]].
-    rewrite Heq in Hin. exact (Hok t a b Ht Hin Hext). }
+  { intros i a b Hin Hext.
+    destruct (tr_spec i) as [Ht [_ [_ Heq]]].
+    apply Hok with (t:=tr i); auto.
+ }
   (* preservation clocks: smaller values *)
   assert (Hpres : forall x, is_restart x = false ->
                     forall i, vals (ew_val rho 0) r (ew_base rho) i x <= ew_val rho i x).
@@ -1769,8 +1726,8 @@ Proof.
     + intros i x. reflexivity.
   - exists run. split; [exact Hinit|]. split; [|exact Hacc].
     intro i. split; [exact (proj1 (Hsteps i))|].
-    destruct (Hlab i) as [t [_ [Ht [[Hs [Hd Hl]] Heq]]]].
-    exists (complete_trans t). split; [simpl; apply in_map; exact Ht|].
+    destruct (tr_spec i) as [Ht [Hs [Hd Hl]]].
+    exists (complete_trans (tr i)). split; [simpl; apply in_map; exact Ht|].
     split; [exact Hs|]. split; [exact Hd|].
     rewrite Forall_forall in Hl.
     split; [|split].
@@ -1793,7 +1750,7 @@ Proof.
       destruct Ha as [[a' b] [Ea Ha]]. simpl in Ea. subst a'.
       apply filter_In in Ha. destruct Ha as [Ha Hb]. simpl in Hb. subst b.
       pose proof (Hl _ Ha) as H. unfold plit_holds, word_of in H. simpl in H.
-      assert (Hin' : In (a, true) (lab i)) by (rewrite Heq; exact Ha).
+      assert (Hin' : In (a, true) (lab i)) by (exact Ha).
       destruct a as [q|q|x d|x d|x d|x d|x|x]; simpl; try exact I;
         pose proof (proj2 (Hok' i _ _ Hin' eq_refl)) as Hk; simpl in Hk;
         simpl in H; unfold c_le, c_lt, c_ge, c_gt in H.
@@ -1802,7 +1759,7 @@ Proof.
       * pose proof (Hrest x Hk i). unfold clock_constraint_holds, rho'. simpl. lra.
       * pose proof (Hrest x Hk i). unfold clock_constraint_holds, rho'. simpl. lra.
     + (* resets *)
-      intro x. simpl. rewrite Hr, Heq. reflexivity.
+      intro x. simpl. rewrite Hr. reflexivity.
 Qed.
 
 End Completion.
