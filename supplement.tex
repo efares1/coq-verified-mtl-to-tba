@@ -113,4 +113,29 @@ instructions are in \texttt{README\_proof.md}. The convenience theorem
 \texttt{LTL\_TO\_BUCHI\_CORRECT}; the main paper states the contract-
 parameterized theorem.
 
+\section{Concrete Alarm TBA Listing}
+\label{app:alarm-tba}
+For the alarm instance in Section~\ref{main-sec:alarm-example} of the main paper,
+the compiled TBA \texttt{alarm\_response\_spot\_tba} has locations
+$\{0,1,2\}$, initial location $0$, accepting locations $\{0,1\}$, and clock
+$x$. The following transitions result from applying relaxation and reset
+completion to the manual Rocq transcription of the Spot graph. Here $A$ and
+$H$ denote the alarm and handled events; $\top$ means no clock guard, and
+$\varnothing$ means no reset. Guards are checked before resets.
+\[
+\begin{array}{c|c|c|c|c}
+\text{source}&\text{target}&\text{event}&\text{guard}&\text{reset}\\ \hline
+0&0&H&\top&\{x\}\\
+0&0&\neg A&\top&\{x\}\\
+0&1&A\land\neg H&\top&\{x\}\\
+1&0&H&x\le 3&\{x\}\\
+1&2&\neg H&x\le 3&\varnothing\\
+2&0&H&x\le 3&\{x\}\\
+2&2&\neg H&x\le 3&\varnothing
+\end{array}
+\]
+The manual DOT-to-record correspondence is not verified; this table lists the
+TBA compiled from the Rocq record whose propositional language contract is
+proved in the main paper.
+
 \end{document}

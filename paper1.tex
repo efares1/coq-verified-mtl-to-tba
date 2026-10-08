@@ -68,9 +68,11 @@ activations. Soundness holds for every clock-consistent reset trace;
 completeness constructs a canonical trace using residual obligations. These
 arguments establish \texttt{MTL\_to\_TBA\_correct\_with}. The result covers strict and non-strict
 bounds within the stated core domain; it is not an integrated compiler or a
-performance comparison. For the alarm-response instance, we also check one
-concrete Spot 2.16 propositional automaton against the translated formula in
-Rocq and instantiate the timed theorem with it.
+performance comparison. For the alarm-response instance, we prove in Rocq
+that a propositional B\"uchi record manually transcribed from a Spot 2.16
+graph has the same language as the translated formula over all propositional
+words, then instantiate the timed theorem for that record. This does not
+verify Spot or the graph-to-record transcription.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,31 +100,29 @@ across later activations? Table~\ref{tab:overlap-example} gives a trace, and
 the Rocq theorem answers this for the abstract translation under its backend
 contract.
 
-To show what this mechanized assurance provides for a concrete requirement,
-we close the technical development with an alarm-response instance
-(Section~\ref{sec:alarm-example}): every alarm must be handled within three
-time units. Spot 2.16 generates a small propositional automaton from the
-translated clocked-LTL formula. We transcribe that result into Rocq and prove
-its language equivalent to the formula for all propositional words; this
-discharges the backend contract for the instance and lets us instantiate the
-timed theorem. Rocq also proves that a concrete infinite timed word violates
-the requirement and that the resulting concrete TBA rejects it. Spot itself
-and the graph-to-record transcription are not verified, and this is not a
-full tool-pipeline run.
+To demonstrate this assurance on a concrete requirement,
+Section~\ref{sec:alarm-example} considers alarms that must be handled within
+three time units. Spot 2.16~\cite{[spot]} generates an automaton for the
+translated formula. Rocq proves that a manual transcription has the same
+language over all propositional words, discharges the backend contract for
+that record, instantiates the timed theorem, and rejects a fixed violating
+timed trace. The graph-to-record link is not verified, so this is not a full
+tool-pipeline run.
 
-This paper gives a mechanized translation for well-formed core formulas in
-the one-sided-bounded fragment $\mathrm{MTL}_{0,\infty}$~
-\cite{[RK90],[RTH96],[BDLG14]}.
-Zero-bound source cases are reduced as described below; that preprocessing is
-not mechanized. Its key construction assigns a clock to each
-\emph{distinct primitive timed subformula}, rather
-than to each syntax-tree occurrence or run-time activation. The clocked-LTL
-encoding constrains that shared clock through reset and preservation markers.
-The proof's completeness direction chooses a canonical reset trace that
-retains the oldest useful reference when it subsumes newer obligations;
-residual predicates express what remains of an obligation after time has
-advanced. This establishes that repeated activations need no additional
-clocks.
+Prior MTL$_{0,\infty}$-to-TBA constructions already use timed-subformula
+clocks and reset policies~\cite{[BDLG14],li_spin7,casaal_tool}. This paper
+mechanizes the translation for well-formed core formulas in
+$\mathrm{MTL}_{0,\infty}$~\cite{[RK90],[RTH96],[BDLG14]}, without claiming a
+new clock/reset architecture or clock-count advantage. Rocq proves the
+clocked-LTL factorization, one-clock completeness under repeated activations,
+and correctness of relaxation and reset completion under the backend
+contract. This gives tool developers a reusable assurance component; the
+external backend and full pipeline remain separate obligations.
+Zero-bound source cases are reduced as described below, but that preprocessing
+is not mechanized. The clocked-LTL encoding constrains shared clocks through
+reset and preservation markers. For completeness, a canonical reset trace
+retains the oldest useful reference, while residual predicates express the
+remaining obligation as time advances.
 
 The translation is factored through ordinary LTL. It is therefore independent
 of the particular LTL-to-B\"uchi translator, subject only to a stated
@@ -152,18 +152,21 @@ Our contributions are:
         reset policy and residual obligations that justify one clock per
         distinct primitive timed subformula despite arbitrarily overlapping
         activations, without dropping older pending deadlines;
-  \item relaxation and reset completion, with a Rocq semantic theorem for
-        every LTL-to-B\"uchi backend satisfying the explicit correctness
-        contract.
+  \item relaxation and reset completion under an explicit backend contract,
+        instantiated for an alarm formula by proving the contract for a
+        manual Spot 2.16 graph transcription and rejecting a fixed violating
+        trace.
 \end{itemize}
 
 The formal development includes the named results
 \texttt{EncodingCorrect\_proved}, \texttt{T\_uses\_every\_clock}, and
 \texttt{MTL\_to\_TBA\_correct\_with}. The complete arguments for the
 canonical policy and its strict-bound cases appear in the supplementary
-material. A companion manuscript~\cite{fares_bodeveix_tba_optimization}
-reuses this Rocq translation proof and adds generic TBA optimization and
-UPPAAL export; those downstream results are outside this paper's scope.
+material. A related unpublished companion manuscript~\cite{fares_bodeveix_tba_optimization}
+reports reuse of this Rocq translation
+proof and additional TBA optimization and UPPAAL-export results. No stable
+public version is available, so those downstream results are outside the
+evidence and scope of this paper.
 
 For a generator implementing this translation, the assurance contract is
 concrete: given a well-formed core Rocq formula and a propositional B\"uchi
@@ -251,8 +254,10 @@ For precision, the four bounded clauses used below are:
  &\qquad\Bigl(w,j\satM q\\[-1mm]
  &\qquad\quad\lor \exists k\in(i,j).\;w,k\satM p\Bigr)\Bigr).
 \end{align*}
-The index intervals refer to event positions, whereas $t_j-t_i$ is physical
-time. This distinction is material when no event occurs exactly at a bound.
+The index intervals select event positions, whereas $t_j-t_i$ measures
+elapsed physical time. Thus, when a bound falls between two events, no event
+occurs exactly at that bound, and interval membership is still evaluated at
+the event positions.
 The strict increase assumption excludes simultaneous events; divergence is
 used in the lower-bounded Until fairness argument.
 
@@ -385,21 +390,21 @@ timed automaton.
 
 For formula $f$, let $\Clock(f)$ be its finite set of distinct primitive
 hatted timed subformulas. The clock associated with $F\in\Clock(f)$ is
-$x=F$ itself. Thus two identical timed subformulas at different syntax-tree
-paths denote the same logical clock. Syntactically different subformulas
-remain distinct in this construction. The main result proves that the clock
-also serves all dynamic activations of that subformula.
+$x=F$ itself. Clock identity uses structural equality on the Rocq MTL syntax
+tree, with bounds compared by equality in $\Real$. Constructor, operands,
+comparison, and bound all participate: identical formula values at different
+paths share a clock, while semantic equivalence alone does not. No
+simplification-based merging is used. The main result proves that this clock
+also serves all dynamic activations of its subformula.
 The clock count is therefore bounded by the number of distinct primitive
 timed subformulas, which is at most the number of timed occurrences in $f$.
 If structural subformulas are represented as shared nodes, the translation
 can share their LTL encodings as well; this does not remove the usual
 worst-case growth of an LTL-to-B\"uchi construction.
 
-This sharing is semantic rather than an automaton-state minimization. The
-clock key is the normalized primitive formula, including its comparison and
-constant, so identical obligations have one clock identity before the
-propositional automaton is built. The reset trace is then chosen for that
-identity as a whole. In particular, the proof cannot justify the clock bound
+This clock-sharing policy is distinct from automaton-state minimization. The
+reset trace is chosen for each formula identity as a whole. In particular,
+the proof cannot justify the clock bound
 by assigning a fresh clock to each activation and subsequently identifying
 those clocks: it establishes directly that a single trace of reset decisions
 for the formula is sufficient.
@@ -518,13 +523,15 @@ which is exactly what the Until residual records.
 \begin{table}[t]
 \centering
 \caption{Finite prefix showing how a per-request reset can hide an expired
-older deadline. Ages are measured immediately before each event; the deadline
-is five time units. No continuation can repair the missed deadline at time 5.}
+older deadline. Ages are measured immediately before each event; the left
+column preserves the oldest request clock, while the right resets at each
+request. The deadline is five time units, so no continuation can repair the
+miss at time 5.}
 \label{tab:overlap-example}
 \footnotesize
 \begin{tabular}{@{}clccc@{}}
 \toprule
-Event $i$ & Action & Time $t_i$ & Oldest req. & Reset on req.\\
+Event $i$ & Action & Time $t_i$ & Oldest age & Reset age\\
 \midrule
 0 & $\mathit{req}$ & 0 & 0 & 0\\
 1 & $\mathit{req}$ & 4 & 4 & 4\\
@@ -933,8 +940,8 @@ contains the detailed case arguments, arithmetic, and theorem composition.
 
 \begin{table}[t]
 \centering
-\caption{Rocq lemmas for the primitive timed proof cases. Each row denotes
-both strict and non-strict comparisons.}
+\caption{Rocq lemmas for the primitive timed proof cases. Each strict and
+non-strict comparison has its own row.}
 \label{tab:primitive-proof-lemmas}
 \footnotesize
 \begin{tabular}{@{}lll@{}}
@@ -992,7 +999,7 @@ Timed encoding & Rocq proves clocked-LTL equivalence using one clock per distinc
 Propositional backend & The generic theorem assumes the backend contract; Rocq proves it for a manual transcription of one Spot 2.16 graph (Spot itself is unverified).\\
 TBA construction & Rocq proves relaxation and reset completion; output has event guards and no location invariants.\\
 Model-checker adapter & Initial clock values are existential; zero initialization and export adapters are outside the theorem.\\
-Tool integration & No full pipeline or checker run; the Spot graph is reproducible and checked through its Rocq transcription.\\
+Tool integration & No full pipeline or checker run; the saved graph is reproducible with Spot 2.16, while Rocq proves language equivalence for its manual transcription.\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1034,13 +1041,15 @@ self-loop into two cubes. Lemma
 \texttt{alarm\_response\_T\_eq} matches its input to the Rocq translation;
 \texttt{alarm\_response\_spot\_backend\_contract} proves that the transcribed
 automaton has exactly that LTL language on all propositional words. This
-discharges the backend premise for this instance.
+discharges the backend premise for this instance. The regeneration script
+requires \texttt{ltl2tgba --version} to report Spot 2.16.
 
 The resulting concrete TBA is
 \texttt{alarm\_response\_spot\_tba}. Theorem
 \texttt{alarm\_response\_spot\_tba\_correct} instantiates
 Theorem~\ref{thm:mtl-to-tba-correct} and proves that it accepts exactly the
-timed words satisfying $f_{\mathit{alarm}}$.
+timed words satisfying $f_{\mathit{alarm}}$. Its compiled transition listing
+is included in the supplementary material for inspection.
 
 For the fixed infinite trace with alarms at times 0 and 2 and a handled event
 at time 4, \texttt{alarm\_response\_trace\_violates} proves that the first
@@ -1175,8 +1184,8 @@ strict and non-strict one-sided cases. This complements MightyPPL's
 construction proofs and implemented pipeline; it does not replace or
 re-verify them. We have not compared the tools on shared inputs or measured
 their relative coverage, performance, or clock counts, and make no performance
-claim. These related-work discussions distinguish construction and assurance
-scope; they do not rank the tools. The Rocq development is not integrated with MightyPPL,
+claim. This discussion compares construction and assurance scope; it does not
+rank the tools. The Rocq development is not integrated with MightyPPL,
 CASAAL, or another checker.
 
 \runinhead{Mechanized translations and trusted backends.}
@@ -1212,33 +1221,16 @@ stage only. It gives no TBA-to-Event-B transformation or correctness result
 for generated Event-B patterns.
 
 \section{Conclusion}
-We have mechanized semantic preservation from well-formed core formulas of
-$\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata without
-location invariants and with existential initial clock valuations. The core
-domain has positive lower and strict upper bounds and nonnegative non-strict
-upper bounds; zero-lower and zero-strict-upper reductions are described, but
-their preprocessing is not mechanized. Under the explicit backend contract,
-the clocked-LTL factorization and reset completion preserve the timed language
-while using one clock per distinct primitive timed subformula across
-overlapping activations. These are the results proved by
-\texttt{MTL\_to\_TBA\_correct\_with}.
+Under an explicit backend contract, we mechanize semantic preservation from
+well-formed core $\mathrm{MTL}_{0,\infty}$ formulas to event-guarded timed
+B\"uchi automata with existential initial clocks. Clocked-LTL factorization
+and reset completion preserve the timed language with one clock per
+syntactically distinct primitive timed subformula.
 
-For tool builders, the theorem gives a verified basis for formula-keyed clock
-reuse; the overlap trace shows why an older deadline must survive a later
-activation. The alarm instance shows how to discharge the backend premise:
-encode a generated propositional automaton, prove its language equivalent to
-the clocked-LTL formula, and apply the timed theorem. This proof checks a
-manual Rocq transcription, so a production workflow still needs a verified or
-validated link from the external graph to that record. Front-end,
-initialization, and export obligations remain, and we report no integrated
-tool run or performance comparison with CASAAL. Sources and build
-instructions are at
-\url{https://github.com/efares1/coq-verified-mtl-to-tba}.
-
-The next step is to use the TBA as an intermediate representation for deriving
-reusable Event-B refinement patterns from MTL properties. This requires a
-separate TBA-to-Event-B transformation and a correctness argument connecting
-the generated patterns to the source property.
+For the alarm, Rocq proves the backend contract for a manual Spot 2.16
+transcription and instantiates the timed theorem to reject a fixed violating
+trace. The graph-to-record link and tool adapters remain outside the proof;
+no integrated run or performance claim is made.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
