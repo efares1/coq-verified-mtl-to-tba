@@ -77,8 +77,10 @@ try {
 }
 ```
 
-The proof-only example specializes the shared-clock translation theorem;
-it does not add a backend implementation or an exported automaton. Paper 2
+The proof-only example specializes the shared-clock translation theorem,
+proves that a fixed infinite alarm trace violates the requirement, and derives
+conditional rejection by any backend satisfying the stated contract. It does
+not add a backend implementation or an exported automaton. Paper 2
 reuses the core translation and correctness modules as its upstream result,
 then adds the generic TBA optimization and export proofs,
 initialization adapter, extraction, implementation, and evaluation. Those

@@ -96,6 +96,17 @@ across later activations? Table~\ref{tab:overlap-example} gives a trace, and
 the Rocq theorem answers this for the abstract translation under its backend
 contract.
 
+To show what this mechanized assurance provides for a concrete requirement,
+we close the technical development with an alarm-response instance
+(Section~\ref{sec:alarm-example}):
+every alarm must be handled within three time units. Rocq checks that this
+formula is well formed, confirms that it has one primitive timed subformula,
+and specializes the language-preservation theorem under the stated backend
+contract. It also proves that a concrete infinite timed word violates the
+requirement and, conditionally, that the corresponding TBA rejects that word.
+This demonstrates the theorem on overlapping alarm obligations; it remains a
+proof instance, not an execution of the full tool pipeline.
+
 This paper gives a mechanized translation for well-formed core formulas in
 the one-sided-bounded fragment $\mathrm{MTL}_{0,\infty}$~
 \cite{[RK90],[RTH96],[BDLG14]}.
@@ -122,6 +133,12 @@ the theorem. The Rocq
 syntax stores bounds as elements of $\Real$, so the result establishes
 semantic correctness for Rocq-level formulas; it does not provide a finite
 textual encoding or an extracted executable compiler for numeric bounds.
+
+The broader research objective is to derive reusable Event-B refinement
+patterns from MTL properties, using TBA as an intermediate representation.
+This article establishes the verified MTL-to-TBA stage of that direction;
+transforming the resulting automata into Event-B patterns is outside its
+present results.
 
 Our contributions are:
 \begin{itemize}
@@ -163,27 +180,6 @@ execute. The result justifies this clock-sharing architecture; it establishes
 neither a clock-count advantage over CASAAL nor a runtime or automaton-size
 improvement.
 
-A proof-only instance makes this assurance contract concrete. The Rocq module
-\texttt{proof/OverlappingResponse\_Example.v} defines
-$f_{\mathit{alarm}}=\mathsf{G}(\mathit{alarm}\Rightarrow
-\Diamond_{\le 3}\mathit{handled})$ as
-\texttt{MR MFalse (MOr (MNotAtom ALARM) (MUle 3 MTrue (MAtom HANDLED)))},
-where \texttt{ALARM} and \texttt{HANDLED} are actions 1 and 2. Its only
-primitive timed subformula is $\widehat{\mathsf{U}}_{\le 3}\,\top\,
-\mathit{handled}$, so the formula uses one formula-keyed clock across all
-alarm events. For a propositional B\"uchi automaton $A$, the module retains the
-explicit premise $\forall s:\mathit{pword}(f_{\mathit{alarm}}),\
-\mathit{PBA\_accepts}(A,s)\leftrightarrow
-\mathit{psat}(s,0,T(f_{\mathit{alarm}}))$. Under this premise, Rocq checks
-the instance $\forall w,\ \mathit{msat}(w,0,f_{\mathit{alarm}})\leftrightarrow
-\mathit{TBA\_accepts}(\mathit{compile\_with}(A),w)$ for every timed word in
-the development's domain. Thus two alarms at times 0 and 2 followed by a
-handled event at time 4 violate the source property and are rejected by the
-event-guarded TBA, even though the later alarm is handled on time. This
-instance does not discharge the backend premise or materialize an automaton;
-it stops at the theorem's event-guarded TBA semantics and includes no
-optimization, initialization adapter, export, or checker run.
-
 To transfer this result into an executable tool, a consumer must implement the
 target semantics: event-guarded transitions without location invariants and
 existential initial clock values. Parsing, finite textual encoding of bounds,
@@ -216,6 +212,10 @@ We write a bound as $\sim d$, with $\sim\in\{<,\le,>,\ge\}$. The logic also
 contains the hatted operators $\hUntil_{\sim d}$ and
 $\hRelease_{\sim d}$. In a hatted operator the current position is skipped
 by the logical interval, while its timestamp remains the timing reference.
+We use $\widehat{\Box}_{\sim d}\varphi$ as shorthand for
+$\bot\hRelease_{\sim d}\varphi$; it requires $\varphi$ at each strictly
+future position whose elapsed time from the current position satisfies the
+bound.
 
 A timed word is $w=(a_i,t_i)_{i\in\Nat}$, where $a_i\in\Sigma$,
 $0\le t_0<t_1<\cdots$, and timestamps diverge. We write
@@ -993,6 +993,34 @@ Tool integration & No end-to-end run; Spot regenerates only the propositional gr
 \end{tabular}
 \end{table}
 
+\subsection{Alarm-response proof instance}
+\label{sec:alarm-example}
+Consider $f_{\mathit{alarm}}=\mathsf{G}(\mathit{alarm}\Rightarrow
+\Diamond_{\le 3}\mathit{handled})$, meaning every alarm must be handled within
+three time units. The Rocq module
+\texttt{proof/OverlappingResponse\_Example.v} defines this formula as
+\texttt{MR MFalse (MOr (MNotAtom ALARM) (MUle 3 MTrue (MAtom HANDLED)))},
+where \texttt{ALARM} and \texttt{HANDLED} are actions 1 and 2. Rocq checks
+that the formula is well formed and has exactly one primitive timed
+subformula, $\widehat{\mathsf{U}}_{\le 3}\,\top\,\mathit{handled}$, so all
+alarm obligations use one formula-keyed clock. The theorem
+\texttt{alarm\_response\_tba\_correct\_with} specializes
+Theorem~\ref{thm:mtl-to-tba-correct}: for any propositional B\"uchi automaton
+$A$ satisfying the backend correctness condition, the TBA
+$\mathit{compile\_with}(A)$ accepts exactly the timed words satisfying
+$f_{\mathit{alarm}}$.
+
+The Rocq module fixes the infinite trace with alarms at times 0 and 2, a handled
+event at time 4, and neutral action 0 at times 6, 8, and thereafter. The first
+alarm misses its deadline, so the lemma
+\texttt{alarm\_response\_trace\_violates} proves that this trace violates
+$f_{\mathit{alarm}}$. Corollary
+\texttt{alarm\_response\_trace\_rejected\_by\_any\_correct\_backend} then
+proves, for every backend satisfying the stated correctness condition, that
+$\mathit{compile\_with}(A)$ rejects this trace. This remains a conditional
+proof instance: it does not provide a concrete backend automaton, emit an
+automaton file, or run a checker.
+
 \section{Related Work}
 \label{sec:related}
 \begin{table*}[!t]
@@ -1143,6 +1171,17 @@ output were adapted to the automaton interface used by the Rocq development.
 Our result thus isolates the timed translation proof from the backend rather
 than claiming that Spot itself is verified.
 
+\runinhead{Event-B refinement patterns.}
+Our work on Event-B patterns addresses their generation and refinement,
+including DSL-based pattern generation~\cite{fares_abz23}, patterns using
+weakest-precondition calculus~\cite{fares_facs24}, and pattern-based
+development using predicate transformers~\cite{fares_scp27}. These works
+provide the Event-B pattern-generation context for our broader objective:
+given an MTL property, use its TBA translation as the input to a downstream
+Event-B pattern-generation step. The present paper establishes the MTL-to-TBA
+stage only. It gives no TBA-to-Event-B transformation or correctness result
+for generated Event-B patterns.
+
 \section{Conclusion}
 We have mechanized semantic preservation from well-formed core formulas of
 $\mathrm{MTL}_{0,\infty}$ to event-guarded timed B\"uchi automata without
@@ -1164,6 +1203,11 @@ summarized in Table~\ref{tab:proof-boundary}; this paper reports no integrated
 tool run or performance comparison with CASAAL. The Rocq sources and build
 instructions are available at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}.
+
+The next step is to use the TBA as an intermediate representation for deriving
+reusable Event-B refinement patterns from MTL properties. This requires a
+separate TBA-to-Event-B transformation and a correctness argument connecting
+the generated patterns to the source property.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

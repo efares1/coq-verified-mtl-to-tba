@@ -1,4 +1,4 @@
-(* Reproduce the assumptions of the main theorem and proof-only instance. *)
+(* Reproduce the assumptions of the main theorem and alarm trace instance. *)
 Require Import MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.
 Require Import EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.
 Require Import OverlappingResponse_Example.
@@ -11,3 +11,7 @@ Check MTL_to_TBA_correct_with.
 Print Assumptions MTL_to_TBA_correct_with.
 Check alarm_response_tba_correct_with.
 Print Assumptions alarm_response_tba_correct_with.
+Check alarm_response_trace_violates.
+Print Assumptions alarm_response_trace_violates.
+Check alarm_response_trace_rejected_by_any_correct_backend.
+Print Assumptions alarm_response_trace_rejected_by_any_correct_backend.
