@@ -67,8 +67,10 @@ clock to each distinct primitive timed subformula, including overlapping
 activations. Soundness holds for every clock-consistent reset trace;
 completeness constructs a canonical trace using residual obligations. These
 arguments establish \texttt{MTL\_to\_TBA\_correct\_with}. The result covers strict and non-strict
-bounds within the stated core domain; it is an abstract translation result,
-not an integrated compiler or a performance comparison.
+bounds within the stated core domain; it is not an integrated compiler or a
+performance comparison. For the alarm-response instance, we also check one
+concrete Spot 2.16 propositional automaton against the translated formula in
+Rocq and instantiate the timed theorem with it.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,14 +100,15 @@ contract.
 
 To show what this mechanized assurance provides for a concrete requirement,
 we close the technical development with an alarm-response instance
-(Section~\ref{sec:alarm-example}):
-every alarm must be handled within three time units. Rocq checks that this
-formula is well formed, confirms that it has one primitive timed subformula,
-and specializes the language-preservation theorem under the stated backend
-contract. It also proves that a concrete infinite timed word violates the
-requirement and, conditionally, that the corresponding TBA rejects that word.
-This demonstrates the theorem on overlapping alarm obligations; it remains a
-proof instance, not an execution of the full tool pipeline.
+(Section~\ref{sec:alarm-example}): every alarm must be handled within three
+time units. Spot 2.16 generates a small propositional automaton from the
+translated clocked-LTL formula. We transcribe that result into Rocq and prove
+its language equivalent to the formula for all propositional words; this
+discharges the backend contract for the instance and lets us instantiate the
+timed theorem. Rocq also proves that a concrete infinite timed word violates
+the requirement and that the resulting concrete TBA rejects it. Spot itself
+and the graph-to-record transcription are not verified, and this is not a
+full tool-pipeline run.
 
 This paper gives a mechanized translation for well-formed core formulas in
 the one-sided-bounded fragment $\mathrm{MTL}_{0,\infty}$~
@@ -968,9 +971,10 @@ The convenience theorem \texttt{MTL\_to\_TBA\_correct} uses the core axiom
 \texttt{MTL\_to\_TBA\_correct\_with}, instead takes backend language
 equivalence as an explicit argument. The assumption audit in
 \texttt{proof/ASSUMPTIONS.txt} also reports the standard Rocq assumptions
-\texttt{ClassicalDedekindReals.sig\_forall\_dec}, dependent functional
-extensionality,
-\texttt{Description.constructive\_definite\_\allowbreak{}description},
+\texttt{ClassicalDedekindReals.\allowbreak{}sig\_forall\_dec}, dependent
+functional extensionality,
+\texttt{IndefiniteDescription.\allowbreak{}constructive\_\allowbreak{}indefinite\_\allowbreak{}description},
+\texttt{Description.\allowbreak{}constructive\_\allowbreak{}definite\_\allowbreak{}description},
 and \texttt{Classical\_Prop.classic}. These library assumptions are separate
 from the backend contract and from the convenience theorem's project axiom.
 Parsing, backend invocation and output printing are not part of this theorem.
@@ -985,10 +989,10 @@ Pipeline stage & Assurance boundary and software consequence\\
 \midrule
 Formula front end & Input is a well-formed Rocq formula; parsing and finite bound encoding are outside the theorem.\\
 Timed encoding & Rocq proves clocked-LTL equivalence using one clock per distinct primitive timed formula.\\
-Propositional backend & Must satisfy Assumption~\ref{ass:backend}; Spot is illustrative and unverified.\\
+Propositional backend & The generic theorem assumes the backend contract; Rocq proves it for a manual transcription of one Spot 2.16 graph (Spot itself is unverified).\\
 TBA construction & Rocq proves relaxation and reset completion; output has event guards and no location invariants.\\
-Model-checker adapter & Initial clock values are existential; zero-initialization and export adapters are outside the theorem.\\
-Tool integration & No end-to-end run; Spot regenerates only the propositional graph, and the TBA is hand-derived.\\
+Model-checker adapter & Initial clock values are existential; zero initialization and export adapters are outside the theorem.\\
+Tool integration & No full pipeline or checker run; the Spot graph is reproducible and checked through its Rocq transcription.\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -997,29 +1001,54 @@ Tool integration & No end-to-end run; Spot regenerates only the propositional gr
 \label{sec:alarm-example}
 Consider $f_{\mathit{alarm}}=\mathsf{G}(\mathit{alarm}\Rightarrow
 \Diamond_{\le 3}\mathit{handled})$, meaning every alarm must be handled within
-three time units. The Rocq module
-\texttt{proof/OverlappingResponse\_Example.v} defines this formula as
+three time units. In
+\texttt{proof/OverlappingResponse\_Example.v}, the formula is
 \texttt{MR MFalse (MOr (MNotAtom ALARM) (MUle 3 MTrue (MAtom HANDLED)))},
 where \texttt{ALARM} and \texttt{HANDLED} are actions 1 and 2. Rocq checks
-that the formula is well formed and has exactly one primitive timed
-subformula, $\widehat{\mathsf{U}}_{\le 3}\,\top\,\mathit{handled}$, so all
-alarm obligations use one formula-keyed clock. The theorem
-\texttt{alarm\_response\_tba\_correct\_with} specializes
-Theorem~\ref{thm:mtl-to-tba-correct}: for any propositional B\"uchi automaton
-$A$ satisfying the backend correctness condition, the TBA
-$\mathit{compile\_with}(A)$ accepts exactly the timed words satisfying
-$f_{\mathit{alarm}}$.
+that it is well formed and has one primitive timed subformula,
+$\widehat{\mathsf{U}}_{\le 3}\,\top\,\mathit{handled}$, whose obligations
+share clock $x$. Abbreviate $\mathsf{LNAct}(\mathit{alarm})$ by $N$,
+$\mathsf{LAct}(\mathit{handled})$ by $H$, $x\le3$ by $C$, and
+$\mathsf{LUnch}(x)$ by $U$. Spot receives the exact clocked-LTL formula
+\[
+\mathsf{G}\bigl(N\lor H\lor \Next((C\land U)\Until(C\land H))\bigr).
+\]
+Spot 2.16's input and output are saved in
+\texttt{examples/spot/alarm\_response\_backend.ltl} and
+\texttt{examples/spot/alarm\_response\_backend.dot}. Splitting its disjunctive
+edge from state 0 gives this automaton (initial state 0, accepting set
+$\{0,1\}$):
+\[
+\begin{array}{c|c|l}
+\text{source}&\text{target}&\text{label}\\ \hline
+0&0&H\lor N\\
+0&1&\neg H\land\neg N\\
+1&0&C\land H\\
+1&2&C\land\neg H\land U\\
+2&0&C\land H\\
+2&2&C\land\neg H\land U
+\end{array}
+\]
+The graph is manually transcribed as
+\texttt{alarm\_response\_spot\_backend}. Lemma
+\texttt{alarm\_response\_T\_eq} matches its input to the Rocq translation;
+\texttt{alarm\_response\_spot\_backend\_contract} proves that the transcribed
+automaton has exactly that LTL language on all propositional words. This
+discharges the backend premise for this instance.
 
-The Rocq module fixes the infinite trace with alarms at times 0 and 2, a handled
-event at time 4, and neutral action 0 at times 6, 8, and thereafter. The first
-alarm misses its deadline, so the lemma
-\texttt{alarm\_response\_trace\_violates} proves that this trace violates
-$f_{\mathit{alarm}}$. Corollary
-\texttt{alarm\_response\_trace\_rejected\_by\_any\_correct\_backend} then
-proves, for every backend satisfying the stated correctness condition, that
-$\mathit{compile\_with}(A)$ rejects this trace. This remains a conditional
-proof instance: it does not provide a concrete backend automaton, emit an
-automaton file, or run a checker.
+The resulting concrete TBA is
+\texttt{alarm\_response\_spot\_tba}. Theorem
+\texttt{alarm\_response\_spot\_tba\_correct} instantiates
+Theorem~\ref{thm:mtl-to-tba-correct} and proves that it accepts exactly the
+timed words satisfying $f_{\mathit{alarm}}$.
+
+For the fixed infinite trace with alarms at times 0 and 2 and a handled event
+at time 4, \texttt{alarm\_response\_trace\_violates} proves that the first
+alarm misses its deadline. Corollary
+\texttt{alarm\_response\_trace\_rejected\_by\_spot\_tba} proves that this
+TBA rejects it. The graph regenerates with the Spot 2.16 command in
+\texttt{examples/spot/regenerate.sh}. No graph importer, timed model checker,
+or TBA export is verified or run.
 
 \section{Related Work}
 \label{sec:related}
@@ -1032,7 +1061,7 @@ counts, performance, or proof strength.}
 \label{tab:prior-construction-comparison}
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{0.14\textwidth}p{0.25\textwidth}p{0.29\textwidth}p{0.28\textwidth}@{}}
+\begin{tabular}{@{}p{0.14\textwidth}p{0.25\textwidth}p{0.29\textwidth}p{0.27\textwidth}@{}}
 \toprule
 Work & Input and output & Clocks and reset policy & Correctness and implementation evidence\\
 \midrule
@@ -1194,14 +1223,16 @@ while using one clock per distinct primitive timed subformula across
 overlapping activations. These are the results proved by
 \texttt{MTL\_to\_TBA\_correct\_with}.
 
-For tool builders, the theorem supplies a verified basis for formula-keyed
-clock reuse within the stated interface. The overlapping-response trace
-illustrates the failure mode it prevents: per-request resets can make an
-expired older deadline appear fresh. An executable pipeline must still
-discharge the front-end, backend, initialization, and export obligations
-summarized in Table~\ref{tab:proof-boundary}; this paper reports no integrated
-tool run or performance comparison with CASAAL. The Rocq sources and build
-instructions are available at
+For tool builders, the theorem gives a verified basis for formula-keyed clock
+reuse; the overlap trace shows why an older deadline must survive a later
+activation. The alarm instance shows how to discharge the backend premise:
+encode a generated propositional automaton, prove its language equivalent to
+the clocked-LTL formula, and apply the timed theorem. This proof checks a
+manual Rocq transcription, so a production workflow still needs a verified or
+validated link from the external graph to that record. Front-end,
+initialization, and export obligations remain, and we report no integrated
+tool run or performance comparison with CASAAL. Sources and build
+instructions are at
 \url{https://github.com/efares1/coq-verified-mtl-to-tba}.
 
 The next step is to use the TBA as an intermediate representation for deriving

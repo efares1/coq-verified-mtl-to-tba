@@ -14,3 +14,7 @@ esac
 formula="$(<"$script_dir/worked_translation.ltl")"
 ltl2tgba --buchi -S --dot=1 -f "$formula" > "$script_dir/worked_translation.dot"
 printf 'Regenerated %s with %s\n' "$script_dir/worked_translation.dot" "$version_line"
+
+alarm_formula="$(<"$script_dir/alarm_response_backend.ltl")"
+ltl2tgba --buchi -S --dot=1 -f "$alarm_formula" > "$script_dir/alarm_response_backend.dot"
+printf 'Regenerated %s with %s\n' "$script_dir/alarm_response_backend.dot" "$version_line"
