@@ -1,0 +1,8 @@
+- dans les schemas de la figure 4
+- il aurait dû générer !"p" au lieu de "!p" pour faciliter le travail de Spot
+  ce qui évite de générer de gros automates qu'il n'est pas facile de simplifier après
+mélange not et ! dans l'automate
+les 2 se chevauchent
+- il faut supprimer l'utilisation de l'axiome Description.constructive_definite_
+description, (je l'ai fait à la main main il doit pouvoir le faire facilementnt
+)
