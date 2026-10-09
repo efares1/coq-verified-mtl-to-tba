@@ -1,0 +1,8 @@
+# Preserve the exact bytes validated by the v3 artifact manifest after checkout.
+release/ieee-access-paper1-submission-v3/** -text
+
+# Prevent Git from applying text conversions to binary PDFs and template fonts.
+*.pdf binary
+*.png binary
+*.pfb binary
+*.tfm binary

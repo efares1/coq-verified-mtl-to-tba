@@ -1,0 +1,73 @@
+\subsection{Worked example: bounded eventuality with an exclusion window}
+\label{subsec:worked-translation}
+Consider
+\[
+  f=(\Eventually_{\le5}p)\land(\Always_{<2}\neg p).
+\]
+It requires $p$ to be false at the origin and until age two, then true by age
+five. Figure~\ref{fig:translation-reference-tba} shows a hand-simplified
+equivalent one-clock TBA, not the syntax-directed output, which assigns
+separate clocks to the two distinct timed subformulas. The steps below show
+the clocked-LTL translation and timed reinterpretation.
+
+\begin{figure}[t]
+\centering
+\resizebox{0.88\columnwidth}{!}{\input{figures/fig_tba_example}}
+\caption{Hand-simplified equivalent event-guarded TBA for $f$. The initial
+transition requires $\neg p$ and resets $x$; in the waiting location,
+$x\le5$, and acceptance also requires $x\ge2$. Thus $p$ first holds at age
+in $[2,5]$.}
+\label{fig:translation-reference-tba}
+\end{figure}
+
+\begin{enumerate}[label=Step~\arabic*:,leftmargin=*]
+\item The formula is in negation normal form. Expanding the derived operators
+and applying the timed-operator identities gives
+\[
+\begin{aligned}
+f
+ &= (\top\Until_{\le5}p)\land(\bot\Release_{<2}\neg p)\\
+ &= \bigl(p\lor(\top\land\top\hUntil_{\le5}p)\bigr)\\
+ &\qquad\land\bigl(\neg p\land(\bot\lor\bot\hRelease_{<2}\neg p)\bigr).
+\end{aligned}
+\]
+These current-position cases follow Eqs.~\eqref{eq:derive-ule} and
+\eqref{eq:derive-rle}.
+
+\item The two distinct primitive timed subformulas receive clocks $x$ and
+$y$, respectively. Their clocked-LTL translation is
+\begin{align*}
+\Phi_U={}&p\lor\bigl(\top\land\Next\Bigl(
+  ((x\le5)\land\Unch(x)\land\top)\Until\\[-1mm]
+&\qquad((x\le5)\land p)\Bigr)\bigr),\\[-1mm]
+\Phi_R={}&\neg p\land\bigl(\bot\lor(\Reset(y)\land\\[-1mm]
+&\qquad\Next(\neg p\WeakUntil((y\ge2)\lor(\bot\land\neg p))))\bigr),\\[-1mm]
+\T(f)={}&\Phi_U\land\Phi_R.
+\end{align*}
+The Until preserves $x$; the Release test $y\ge2$ complements the source
+bound $<2$, allowing $p$ from age two.
+
+\item A Spot backend output for $\T(f)$ is shown on the left of
+Fig.~\ref{fig:translation-steps45}. Clock guards, reset and preservation
+markers, and action atoms are independent propositions to the backend. In
+particular, $p=\mathsf{LAct}(p)$ and $\neg p=\mathsf{LNAct}(p)$ are distinct
+atoms, while $!p$ is the negated literal of $\mathsf{LAct}(p)$; a backend cube
+may contain both $p$ and $\neg p$. Timed reinterpretation imposes action
+consistency.
+
+\item Relaxation removes negative literals over extended clock atoms. Reset
+completion resets $x$ unless $\Unch(x)$ is present and resets $y$ exactly when
+$\Reset(y)$ is present. The right side of Fig.~\ref{fig:translation-steps45}
+shows the transitions after marker removal; later optimization removes
+unsatisfiable action cubes and simplifies the automaton.
+\end{enumerate}
+
+\begin{figure*}[!t]
+\centering
+\resizebox{\textwidth}{!}{\input{figures/fig_steps45}}
+\caption{Spot 2.16 output (redrawn, left) and hand-derived reset-completed
+TBA (right; same state IDs). Raw input and DOT are in
+\texttt{examples/spot/}. Right-hand edges show guards, actions, and resets;
+$\mathsf{rst}(c)$ and $\mathsf{unch}(c)$ mark reset and preservation.}
+\label{fig:translation-steps45}
+\end{figure*}

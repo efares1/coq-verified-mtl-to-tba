@@ -1,0 +1,166 @@
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{xr}
+\externaldocument[main-]{build/paper1}
+
+\newtheorem{theorem}{Theorem}
+\renewcommand{\thetheorem}{S.\arabic{theorem}}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\renewcommand{\theequation}{S.\arabic{equation}}
+
+\newcommand{\Nat}{\mathbb{N}}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\satM}{\models_{\mathrm{MTL}}}
+\newcommand{\satL}{\models_{\mathrm{LTL}}}
+\newcommand{\Until}{\mathbin{\mathsf{U}}}
+\newcommand{\Release}{\mathbin{\mathsf{R}}}
+\newcommand{\hUntil}{\mathbin{\widehat{\mathsf{U}}}}
+\newcommand{\hRelease}{\mathbin{\widehat{\mathsf{R}}}}
+\newcommand{\Next}{\mathsf{X}}
+\newcommand{\Always}{\mathsf{G}}
+\newcommand{\Eventually}{\mathsf{F}}
+\newcommand{\WeakUntil}{\mathbin{\mathsf{W}}}
+\newcommand{\Reset}{\mathsf{rst}}
+\newcommand{\Unch}{\mathsf{unch}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\CVal}{\mathsf{val}}
+\newcommand{\CReset}{\mathsf{reset}}
+\newcommand{\elapsed}{\mathsf{elap}}
+\newcommand{\ewbase}{\mathsf{ew\_base}}
+\newcommand{\Node}{\mathsf{node}}
+\newcommand{\runinhead}[1]{\par\smallskip\noindent\textbf{#1}\enspace}
+
+\title{Supplementary Material for ``A Mechanically Verified Translation of MTL$_{0,\infty}$ into Timed B\"uchi Automata''}
+\author{Elie Fares, Jean-Paul Bodeveix, Hussain Al-Aqrabi, and Azar Salami}
+\begin{document}
+\maketitle
+
+This supplement contains the detailed reset-policy and residual-obligation
+arguments, reset-completion proofs, and auxiliary clock arithmetic. The
+Rocq source files used by the development are included in the accompanying
+\texttt{proof/} directory. The complete project and build instructions are at
+\url{https://github.com/efares1/coq-verified-mtl-to-tba}. Cross-references
+point to the main paper.
+
+\noindent\textbf{Proof map.} The arguments below support the four challenges
+in main-paper Section~\ref{main-subsec:mechanization-challenges}: occurrence-
+indexed induction in Supplement Section~\ref{subsec:structural-equivalence};
+repeated-activation completeness in Section~\ref{subsec:timed-completeness};
+relaxation and reset completion in Sections~\ref{subsec:reset-completion-proof}
+and~\ref{subsec:relaxation-exactness}; and strict-bound reasoning in the
+primitive arguments of Sections~\ref{subsec:timed-soundness} and
+\ref{subsec:timed-completeness}. The Rocq development contains the complete
+machine-checked proofs; this supplement explains their main invariants.
+
+\section{Omitted Proofs for the TBA Construction}
+\label{sec:supp-proofs}
+
+\subsection{Reset Completion}
+\label{subsec:reset-completion-proof}
+Proof of Lemma~\ref{main-lem:reset-completion}. The extension $\rho'$ is
+clock-consistent by construction. Consider a preservation clock $x$. If the
+cube taken at position $i$ contains $\Unch(x)$, then neither $\rho$ nor
+$\rho'$ resets $x$ at $i$; otherwise $\rho'$ resets it. Hence $\rho'$ resets
+$x$ wherever $\rho$ does, and the clock recurrence
+\eqref{main-eq:clock-update} gives, by induction on positions,
+$\CVal_{\rho'}(i,x)\le\CVal_\rho(i,x)$. The literals over $x$ are upper
+bounds, so remain true. Dually, $\rho'$ resets a restart clock only where
+the cube contains $\Reset(x)$, hence only where $\rho$ resets it. Therefore
+$\CVal_{\rho'}(i,x)\ge\CVal_\rho(i,x)$, and the lower-bound literals
+remain true. Action literals and the B\"uchi condition are unchanged, so the
+same run is accepting after completion (Rocq lemma
+\texttt{complete\_complete}).
+
+\subsection{Exactness of Relaxation and Reset Completion}
+\label{subsec:relaxation-exactness}
+Proof of Proposition~\ref{main-prop:reset-completion}. For soundness, a run of the
+completed TBA gives a run of the relaxed automaton on the propositional word
+of its clock-consistent extension. At each position, the relaxed transition
+comes from an original backend cube. Reconstruct a valuation satisfying that
+cube by setting each relevant extended atom false when its negative literal
+was deleted, retaining values required by surviving literals, and choosing
+values for deleted irrelevant atoms as needed. The resulting word follows the
+same state sequence in the original backend automaton, so the backend contract
+makes it a model of $\T(f)$. The reconstructed and relaxed words agree on base
+atoms; on relevant extended atoms, relaxation can only change false to true.
+Since $\T(f)$ contains extended atoms only positively, it is upward closed in
+those atoms, so the relaxed word also satisfies $\T(f)$. The soundness
+direction of Theorem~\ref{main-thm:encoding-correctness} gives
+$w,0\satM f$.
+
+For completeness, Theorem~\ref{main-thm:encoding-correctness} supplies a
+clock-consistent extension of $w$ satisfying $\T(f)$. The backend contract
+therefore gives an accepting run of the original backend automaton.
+Relaxation preserves this run, and the reset-completion lemma supplies an
+extension accepted by the completed TBA. The mechanized theorem is
+\texttt{MTL\_to\_TBA\_correct\_with}.
+
+\input{proof_details}
+
+\section{Rocq Result Map}
+\label{app:rocq}
+\begingroup
+\raggedright
+The paper's principal statements correspond to these definitions and
+theorems in the included Rocq development.\par\smallskip
+\noindent\textbf{Proof source.} The Rocq definitions of
+\texttt{EncodingCorrect\_proved} and
+\texttt{MTL\_to\_TBA\_correct\_with} are in
+\path{proof/EncodingCorrect_Shared_Clock_Derived_Strict_Direct_Proof.v}.\par\smallskip
+\noindent\textbf{Core source.} The definitions of
+\texttt{T\_uses\_every\_clock} and \texttt{complete\_complete} are in
+\path{proof/MTL_to_TBA_Shared_Clock_Derived_Strict_Direct_Core.v}.\par\smallskip
+The core file also contains the four ordinary Until and Release compatibility
+lemmas and their strict variants.\par\smallskip
+The path-indexed theorem \texttt{canonical\_encoding\_all} and the occurrence
+lemmas \texttt{identical\_nodes\_share\_clock} and
+\texttt{identical\_nodes\_share\_canonical\_trace} are in the correctness
+module. The same module defines \texttt{ule\_residual},
+\texttt{ult\_residual}, \texttt{rge\_residual}, and
+\texttt{rgt\_residual}, together with the eight primitive soundness lemmas
+and eight canonical-completeness lemmas. In the core module,
+\texttt{psat\_mono}, \texttt{relax\_sound}, \texttt{relax\_complete}, and
+the reset-completion lemmas discharge the backend-interface obligations.\par\smallskip
+The theorem with suffix \texttt{\_with} assumes the backend correctness
+contract as an argument and has no project-specific backend axiom. The standard
+library assumptions are preserved in \path{proof/ASSUMPTIONS.txt}; reproduction
+instructions are in \path{proof/README_proof.md}. The convenience theorem
+\texttt{MTL\_to\_TBA\_correct} uses the core axiom
+\texttt{LTL\_TO\_BUCHI\_CORRECT}; the main paper states the contract-
+parameterized theorem.
+\par
+\endgroup
+
+\section{Concrete Alarm TBA Listing}
+\label{app:alarm-tba}
+For the alarm instance in Section~\ref{main-sec:alarm-example} of the main paper,
+the compiled TBA \texttt{alarm\_response\_spot\_tba} has locations
+$\{0,1,2\}$, initial location $0$, accepting locations $\{0,1\}$, and clock
+$x$. The following transitions result from applying relaxation and reset
+completion to the manual Rocq transcription of the Spot graph. Here $A$ and
+$H$ denote the alarm and handled events; $\top$ means no clock guard, and
+$\varnothing$ means no reset. Guards are checked before resets.
+\[
+\begin{array}{c|c|c|c|c}
+\text{source}&\text{target}&\text{event}&\text{guard}&\text{reset}\\ \hline
+0&0&H&\top&\{x\}\\
+0&0&\neg A&\top&\{x\}\\
+0&1&A\land\neg H&\top&\{x\}\\
+1&0&H&x\le 3&\{x\}\\
+1&2&\neg H&x\le 3&\varnothing\\
+2&0&H&x\le 3&\{x\}\\
+2&2&\neg H&x\le 3&\varnothing
+\end{array}
+\]
+The manual DOT-to-record correspondence is not verified; this table lists the
+TBA compiled from the Rocq record whose propositional language contract is
+proved in the main paper.
+
+\end{document}

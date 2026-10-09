@@ -18,6 +18,19 @@ proof/*.vos
 proof/*.vok
 proof/*.glob
 proof/.*.aux
+**/proof/*.vo
+**/proof/*.vos
+**/proof/*.vok
+**/proof/*.glob
+**/proof/.*.aux
+**/proof/.*.cache
+
+# Generated visual previews and text extraction.
+**/build/preview/
+**/build/*.txt
+*-color-test.log
+/ieee_access/build/
+/archive/tse-workspace/build/qa/
 
 # Editor and temporary output.
 *~
