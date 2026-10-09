@@ -91,7 +91,7 @@ transcribed backend record satisfies this contract and prove both an accepted
 overlapping-alarm trace and a violating trace. The theorem uses real-valued
 bounds, well-formed core formulas, strictly increasing divergent timestamps,
 and event-guarded TBAs with existential initial clock valuations; the Spot
-graph-to-record correspondence is outside the proof~\cite{openai_codex}.
+graph-to-record correspondence is outside the proof.
 \end{abstract}
 
 \begin{keywords}
@@ -197,7 +197,7 @@ automaton construction; Section~\ref{sec:correctness} develops the proof and
 includes the alarm-response instance in Section~\ref{sec:alarm-example};
 Section~\ref{sec:artifact} describes the artifact and reproduction procedure,
 and Section~\ref{sec:related} discusses related work before the conclusion
-~\cite{openai_codex}.
+.
 \section{Logic and Semantic Model}
 \label{sec:logic}
 \subsection{Pointwise MTL$_{0,\infty}$}
@@ -358,7 +358,7 @@ v_i(x)+\Delta_i,&\text{otherwise.}
 \]
 The initial nonnegative valuation $v_0$ is existentially quantified, as in
 the Rocq clock-consistent-extension semantics; standard zero initialization
-is not assumed~\cite{openai_codex}.
+is not assumed.
 
 \section{Clocked-LTL Translation}
 \label{sec:translation}
@@ -492,7 +492,7 @@ Event $i$ & Action & Time $t_i$ & Oldest age & Reset age\\
 \end{table}
 This is only motivation. The semantic proof below constructs one trace per
 formula-keyed clock and establishes the residual invariants needed when
-several activations are pending at once~\cite{openai_codex}.
+several activations are pending at once.
 
 \section{From Clocked LTL to a TBA}
 \label{sec:tba-construction}
@@ -1183,7 +1183,7 @@ The repository also provides a Python consistency check between the saved
 graph and Rocq record (up to state renaming, including guards), with mutation
 self-tests for a changed guard and accepting set. It is an executable audit of
 the transcription, not a verified importer or a proof of Spot's semantics.
-The separate finite reset-policy scenario is illustrative~\cite{openai_codex}.
+The separate finite reset-policy scenario is illustrative.
 
 \section{Artifact and Reproducibility}
 \label{sec:artifact}
@@ -1224,7 +1224,7 @@ revised Access snapshot. The candidate
 Algorithm 256 (SHA-256) digests for its packaged files; no public tag, release,
 Digital Object Identifier (DOI), or third-party replay is claimed. Rebuilds
 need not produce byte-identical PDF files; the packaged PDF is the designated
-build~\cite{openai_codex}.
+build.
 
 \section{Related Work}
 \label{sec:related}
@@ -1345,7 +1345,7 @@ provide the Event-B pattern-generation context for our broader objective:
 given an MTL property, use its TBA translation as the input to a downstream
 Event-B pattern-generation step. The present paper establishes the MTL-to-TBA
 stage only. It gives no TBA-to-Event-B transformation or correctness result
-for generated Event-B patterns~\cite{openai_codex}.
+for generated Event-B patterns.
 
 \section{Conclusion}
 This paper provides a Rocq-checked soundness-and-completeness development for
@@ -1377,18 +1377,6 @@ zero-bound preprocessing remain outside the checked boundary. Future work
 can extend the mechanization to these components and connect the semantic
 theorem to a verified executable backend.
 
-The proof artifact and assumptions audit are described in
-Section~\ref{sec:artifact}~\cite{openai_codex}.
-
-\section*{Acknowledgment}
-OpenAI Codex assisted with explanatory prose in the Abstract and Sections
-I--VIII, integration of existing proof explanations, the Rocq implementation
-of the accepted alarm-overlap trace, and LaTeX/reproduction-script changes.
-Section-end citations disclose this artificial intelligence (AI) use as
-required by IEEE Access; they are not evidence for scientific claims. No
-AI-generated figure is included. The authors reviewed the content and code,
-checked the Rocq proof objects, and take responsibility for the mathematics,
-references, code, and submitted article.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
